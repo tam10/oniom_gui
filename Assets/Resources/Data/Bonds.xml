@@ -1,0 +1,392 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+Reference:
+Data for General, Inorganic, Organic, and Physical Chemistry
+Copyright 1989 by C.D. Schaeffer, Jr.      
+(Elizabethtown College)      
+C.A. Strausser, M.W. Thomsen, and C.H. Yoder  
+(Franklin and Marshall College)      
+http://wulfenite.fandm.edu/Data%20/Data.html 
+-->
+<elements>
+	<atom element="H">
+		<other element="H">
+			<single>0.74</single>
+		</other>
+		<other element="B">
+			<single>1.19</single>
+		</other>
+		<other element="C">
+			<single>1.09</single>
+		</other>
+		<other element="N">
+			<single>1.01</single>
+		</other>
+		<other element="O">
+			<single>0.96</single>
+		</other>
+		<other element="F">
+			<single>0.92</single>
+		</other>
+		<other element="Si">
+			<single>1.48</single>
+		</other>
+		<other element="P">
+			<single>1.44</single>
+		</other>
+		<other element="S">
+			<single>1.34</single>
+		</other>
+		<other element="Cl">
+			<single>1.27</single>
+		</other>
+		<other element="Ge">
+			<single>1.53</single>
+		</other>
+		<other element="As">
+			<single>1.52</single>
+		</other>
+		<other element="Se">
+			<single>1.46</single>
+		</other>
+		<other element="Br">
+			<single>1.41</single>
+		</other>
+		<other element="Sn">
+			<single>1.70</single>
+		</other>
+		<other element="Te">
+			<single>1.70</single>
+		</other>
+		<other element="I">
+			<single>1.61</single>
+		</other>
+	</atom>
+
+	<atom element="B">
+		<other element="Cl">
+			<single>1.75</single>
+		</other>
+	</atom>
+
+	<atom element="C">
+		<other element="C">
+			<single>1.54</single>
+			<aromatic>1.44</aromatic>
+			<double>1.34</double>
+			<triple>1.20</triple>
+		</other>
+		<other element="N">
+			<single>1.47</single>
+			<aromatic>1.35</aromatic>
+			<double>1.29</double>
+			<triple>1.16</triple>
+		</other>
+		<other element="O">
+			<single>1.43</single>
+			<double>1.20</double>
+			<triple>1.13</triple>
+		</other>
+		<other element="F">
+			<single>1.35</single>
+		</other>
+		<other element="Si">
+			<single>1.85</single>
+		</other>
+		<other element="P">
+			<single>1.84</single>
+		</other>
+		<other element="S">
+			<single>1.82</single>
+			<double>1.60</double>
+		</other>
+		<other element="Cl">
+			<single>1.77</single>
+		</other>
+		<other element="Ge">
+			<single>1.95</single>
+		</other>
+		<other element="Br">
+			<single>1.94</single>
+		</other>
+		<other element="Sn">
+			<single>2.16</single>
+		</other>
+		<other element="I">
+			<single>2.14</single>
+		</other>
+		<other element="Pb">
+			<single>2.30</single>
+		</other>
+	</atom>
+
+	<atom element="N">
+		<other element="N">
+			<single>1.45</single>
+			<double>1.25</double>
+			<triple>1.10</triple>
+		</other>
+		<other element="O">
+			<single>1.40</single>
+			<double>1.21</double>
+		</other>
+		<other element="F">
+			<single>1.36</single>
+		</other>
+		<other element="P">
+		</other>
+		<other element="S">
+		</other>
+		<other element="Cl">
+			<single>1.75</single>
+		</other>
+
+	</atom>
+
+	<atom element="O">
+		<other element="O">
+			<single>1.48</single>
+			<double>1.21</double>
+		</other>
+		<other element="F">
+			<single>1.42</single>
+		</other>
+		<other element="Si">
+			<single>1.63</single>
+		</other>
+		<other element="P">
+			<single>1.63</single>
+			<double>1.50</double>
+		</other>
+		<other element="S">
+			<double>1.43</double>
+		</other>
+		<other element="Cl">
+		</other>
+		<other element="As">
+			<single>1.78</single>
+		</other>
+		<other element="Xe">
+			<single>1.75</single>
+		</other>
+	</atom>
+
+	<atom element="F">
+		<other element="F">
+			<single>1.42</single>
+		</other>
+		<other element="Si">
+			<single>1.60</single>
+		</other>
+		<other element="P">
+			<single>1.54</single>
+		</other>
+		<other element="S">
+			<single>1.56</single>
+		</other>
+		<other element="Cl">
+		</other>
+		<other element="Ge">
+			<single>1.68</single>
+		</other>
+		<other element="As">
+			<single>1.71</single>
+		</other>
+		<other element="Kr">
+			<single>1.90</single>
+		</other>
+		<other element="Br">
+		</other>
+		<other element="I">
+			<single>1.91</single>
+		</other>
+		<other element="Xe">
+			<single>1.95</single>
+		</other>
+	</atom>
+
+	<atom element="Si">
+		<other element="Si">
+			<single>2.23</single>
+		</other>
+		<other element="S">
+			<single>2.00</single>
+		</other>
+		<other element="Cl">
+			<single>2.02</single>
+		</other>
+		<other element="Br">
+			<single>2.15</single>
+		</other>
+		<other element="I">
+			<single>2.43</single>
+		</other>
+	</atom>
+
+	<atom element="P">
+		<other element="P">
+			<single>2.21</single>
+		</other>
+		<other element="S">
+			<double>1.86</double>
+		</other>
+		<other element="Cl">
+			<single>2.03</single>
+		</other>
+	</atom>
+
+	<atom element="S">
+		<other element="S">
+			<single>2.05</single>
+			<double>1.49</double>
+		</other>
+		<other element="Cl">
+			<single>2.07</single>
+		</other>
+	</atom>
+
+	<atom element="Cl">
+		<other element="Cl">
+			<single>1.99</single>
+		</other>
+		<other element="Ge">
+			<single>2.10</single>
+		</other>
+		<other element="As">
+			<single>2.16</single>
+		</other>
+		<other element="Sn">
+			<single>2.33</single>
+		</other>
+		<other element="Sb">
+			<single>2.32</single>
+		</other>
+		<other element="Br">
+		</other>
+		<other element="I">
+			<single>2.32</single>
+		</other>
+		<other element="Pb">
+			<single>2.42</single>
+		</other>
+	</atom>
+
+	<atom element="Ge">
+		<other element="Ge">
+			<single>2.41</single>
+		</other>
+		<other element="Br">
+			<single>2.30</single>
+		</other>
+	</atom>
+
+	<atom element="As">
+		<other element="As">
+			<single>2.43</single>
+		</other>
+		<other element="Br">
+			<single>2.33</single>
+		</other>
+		<other element="I">
+			<single>2.54</single>
+		</other>
+	</atom>
+
+	<atom element="Se">
+		<other element="Se">
+			<double>2.15</double>
+		</other>
+	</atom>
+
+	<atom element="Br">
+		<other element="Br">
+			<single>2.28</single>
+		</other>
+		<other element="Sn">
+			<single>2.50</single>
+		</other>
+	</atom>
+
+	<atom element="I">
+		<other element="I">
+			<single>2.67</single>
+		</other>
+		<other element="Sn">
+			<single>2.70</single>
+		</other>
+		<other element="Pb">
+			<single>2.79</single>
+		</other>
+	</atom>
+</elements>
+
+<!--
+B Cl 5 17 1.75 NA NA NA NA NA
+C C 6 6 1.54 1.34 1.2 1.54 1.34 1.2
+C N 6 7 1.47 1.29 1.16 1.47 1.32 1.16
+C O 6 8 1.43 1.2 1.13 1.43 1.2 1.13
+C F 6 9 1.35 NA NA 1.35 NA NA
+C Si 6 14 1.85 NA NA NA NA NA
+C P 6 15 1.84 NA NA 1.84 NA NA
+C S 6 16 1.82 1.6 NA 1.82 NA NA
+C Cl 6 17 1.77 NA NA 1.77 NA NA
+C Ge 6 32 1.95 NA NA NA NA NA
+C Br 6 35 1.94 NA NA 1.94 NA NA
+C Sn 6 50 2.16 NA NA NA NA NA
+C I 6 53 2.14 NA NA 2.14 NA NA
+C Pb 6 82 2.3 NA NA NA NA NA
+N N 7 7 1.45 1.25 1.1 1.45 1.25 1.1
+N O 7 8 1.4 1.21 NA 1.4 1.21 NA
+N F 7 9 1.36 NA NA 1.36 NA NA
+N P 7 15 NA NA NA 1.57 NA NA
+N S 7 16 NA NA NA 1.65 NA NA
+N Cl 7 17 1.75 NA NA 1.75 NA NA
+O O 8 8 1.48 1.21 NA 1.48 1.21 NA
+O F 8 9 1.42 NA NA 1.42 NA NA
+O Si 8 14 1.63 NA NA NA NA NA
+O P 8 15 1.63 1.5 NA 1.63 1.5 NA
+O S 8 16 NA 1.43 NA NA 1.43 NA
+O Cl 8 17 NA NA NA 2.03 NA NA
+O As 8 33 1.78 NA NA NA NA NA
+O Xe 8 54 1.75 NA NA NA NA NA
+F F 9 9 1.42 NA NA 1.42 NA NA
+F Si 9 14 1.6 NA NA NA NA NA
+F P 9 15 1.54 NA NA 1.54 NA NA
+F S 9 16 1.56 NA NA 1.56 NA NA
+F Cl 9 17 NA NA NA 1.65 NA NA
+F Ge 9 32 1.68 NA NA NA NA NA
+F As 9 33 1.71 NA NA NA NA NA
+F Kr 9 36 1.9 NA NA NA NA NA
+F Br 9 35 NA NA NA 1.76 NA NA
+F I 9 53 1.91 NA NA 1.8 NA NA
+F Xe 9 54 1.95 NA NA NA NA NA
+Si Si 14 14 2.23 NA NA NA NA NA
+Si S 14 16 2 NA NA NA NA NA
+Si Cl 14 17 2.02 NA NA NA NA NA
+Si Br 14 35 2.15 NA NA NA NA NA
+Si I 14 53 2.43 NA NA NA NA NA
+P P 15 15 2.21 NA NA 1.89 NA NA
+P S 15 16 NA 1.86 NA NA NA NA
+P Cl 15 17 2.03 NA NA 2.03 NA NA
+S S 16 16 2.05 1.49 NA 2.05 1.56 NA
+S Cl 16 17 2.07 NA NA 2.07 NA NA
+Cl Cl 17 17 1.99 NA NA 1.99 NA NA
+Cl Ge 17 32 2.1 NA NA NA NA NA
+Cl As 17 33 2.16 NA NA NA NA NA
+Cl Sn 17 50 2.33 NA NA NA NA NA
+Cl Sb 17 51 2.32 NA NA NA NA NA
+Cl Br 17 35 NA NA NA 2.14 NA NA
+Cl I 17 53 2.32 NA NA 2.32 NA NA
+Cl Pb 17 82 2.42 NA NA NA NA NA
+Ge Ge 32 32 2.41 NA NA NA NA NA
+Ge Br 32 35 2.3 NA NA NA NA NA
+As As 33 33 2.43 NA NA NA NA NA
+As Br 33 35 2.33 NA NA NA NA NA
+As I 33 53 2.54 NA NA NA NA NA
+Se Se 34 34 NA 2.15 NA NA NA NA
+Br Br 35 35 2.28 NA NA 2.29 NA NA
+Br Sn 35 50 2.5 NA NA NA NA NA
+I I 53 53 2.67 NA NA 2.67 NA NA
+I Sn 53 50 2.7 NA NA NA NA NA
+I Pb 53 82 2.79 NA NA NA NA NA
+-->

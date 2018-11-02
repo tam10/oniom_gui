@@ -1,0 +1,216 @@
+%mem=2000MB
+%chk=model_amber2.chk
+%nprocshared=1
+#p oniom(amber) geom=connectivity
+
+Gaussian input prepared by ASE
+
+1 2
+ N-N--0.851600(PDBName=N1,ResName=CRA,ResNum=64)     0   55.55200000    9.30900000   -0.12800000 H
+ C-CT-0.180800(PDBName=CA1,ResName=CRA,ResNum=64)    0   54.72700000    9.37300000   -1.35000000 H
+ C-CT-0.174900(PDBName=CB1,ResName=CRA,ResNum=64)    0   55.34600000    8.45500000   -2.43900000 H
+ C-CT--0.129800(PDBName=CG1,ResName=CRA,ResNum=64)   0   56.75600000    8.91400000   -2.79600000 H
+ O-OH--0.626700(PDBName=OG1,ResName=CRA,ResNum=64)   0   55.47300000    7.14300000   -1.93300000 H
+ C-CK-0.041300(PDBName=C1,ResName=CRA,ResNum=64)     0   53.34600000    9.00900000   -0.96900000 H
+ N-NB--0.343900(PDBName=N2,ResName=CRA,ResNum=64)    0   52.86600000    7.78600000   -1.03800000 H
+ N-N*--0.003400(PDBName=N3,ResName=CRA,ResNum=64)    0   52.41300000    9.98800000   -0.46900000 H
+ C-C-0.341100(PDBName=C2,ResName=CRA,ResNum=64)      0   51.20500000    9.24500000   -0.23000000 H
+ O-O--0.620400(PDBName=O2,ResName=CRA,ResNum=64)     0   50.15200000    9.71900000    0.18700000 H
+ C-CC--0.033000(PDBName=CA2,ResName=CRA,ResNum=64)   0   51.55700000    7.84000000   -0.59500000 H
+ C-CT-0.006400(PDBName=CA3,ResName=CRA,ResNum=64)    0   52.69800000   11.40700000   -0.26000000 H
+ C-CD--0.085500(PDBName=CB2,ResName=CRA,ResNum=64)   0   50.64700000    6.79900000   -0.45800000 H
+ C-CA--0.055600(PDBName=CG2,ResName=CRA,ResNum=64)   0   50.75400000    5.39900000   -0.68800000 H
+ C-CA--0.065400(PDBName=CD1,ResName=CRA,ResNum=64)   0   52.03600000    4.78400000   -1.16400000 H
+ C-CA--0.155300(PDBName=CD2,ResName=CRA,ResNum=64)   0   49.63200000    4.47000000   -0.45100000 H
+ C-CA--0.413700(PDBName=CE1,ResName=CRA,ResNum=64)   0   52.17500000    3.40200000   -1.37800000 H
+ C-CA--0.369700(PDBName=CE2,ResName=CRA,ResNum=64)   0   49.75500000    3.08200000   -0.66000000 H
+ C-C-0.679300(PDBName=CZ,ResName=CRA,ResNum=64)      0   51.03000000    2.45800000   -1.14200000 H
+ O-O--0.693100(PDBName=OH,ResName=CRA,ResNum=64)     0   51.12500000    1.22100000   -1.32600000 H
+ H-H-0.329000(PDBName=H,ResName=CRA,ResNum=64)       0   55.52400000    8.36300000    0.25200000 H
+ H-H1-0.329000(PDBName=H4,ResName=CRA,ResNum=64)     0   54.70100000   10.35300000   -1.77800000 H
+ H-H1-0.329000(PDBName=H5,ResName=CRA,ResNum=64)     0   54.70700000    8.49400000   -3.29600000 H
+ H-HC-0.329000(PDBName=H6,ResName=CRA,ResNum=64)     0   57.37700000    8.86700000   -1.92600000 H
+ H-HC-0.329000(PDBName=H7,ResName=CRA,ResNum=64)     0   56.72300000    9.92100000   -3.15700000 H
+ H-HC-0.329000(PDBName=H8,ResName=CRA,ResNum=64)     0   57.15700000    8.27600000   -3.55500000 H
+ H-HO-0.329000(PDBName=H9,ResName=CRA,ResNum=64)     0   56.05800000    7.15000000   -1.15900000 H
+ H-H1-0.329000(PDBName=H10,ResName=CRA,ResNum=64)    0   53.76300000   11.51500000   -0.26300000 H
+ H-H1-0.329000(PDBName=H11,ResName=CRA,ResNum=64)    0   52.19200000   11.63400000    0.65500000 H
+ H-HA-0.329000(PDBName=H12,ResName=CRA,ResNum=64)    0   49.71700000    7.09800000   -0.12600000 H
+ H-HA-0.329000(PDBName=H13,ResName=CRA,ResNum=64)    0   52.84600000    5.39800000   -1.34100000 H
+ H-HA-0.329000(PDBName=H14,ResName=CRA,ResNum=64)    0   48.73000000    4.84800000   -0.12200000 H
+ H-HA-0.329000(PDBName=H15,ResName=CRA,ResNum=64)    0   53.08000000    3.02900000   -1.70300000 H
+ H-HA-0.329000(PDBName=H16,ResName=CRA,ResNum=64)    0   48.94100000    2.47500000   -0.47500000 H
+ C-CT--0.046200(PDBName=CB,ResName=HID,ResNum=145)   0   48.18200000   -1.04200000   -0.70800000 H
+ C-CC--0.026600(PDBName=CG,ResName=HID,ResNum=145)   0   49.26500000   -1.70700000    0.08200000 H
+ H-HC-0.040200(PDBName=HB3,ResName=HID,ResNum=145)   0   47.36200000   -0.97400000   -0.12700000 H
+ H-HC-0.040200(PDBName=HB2,ResName=HID,ResNum=145)   0   48.48400000   -0.10900000   -0.93900000 H
+ C-CV-0.129200(PDBName=CD2,ResName=HID,ResNum=145)   0   49.20600000   -2.60700000    1.09200000 H
+ H-H-0.364900(PDBName=HD1,ResName=HID,ResNum=145)    0   50.97100000   -0.84500000   -0.83100000 H
+ H-H5-0.139200(PDBName=HE1,ResName=HID,ResNum=145)   0   52.31800000   -2.21100000    0.74800000 H
+ C-CR-0.205700(PDBName=CE1,ResName=HID,ResNum=145)   0   51.32300000   -2.19400000    0.69700000 H
+ N-NA--0.381100(PDBName=ND1,ResName=HID,ResNum=145)  0   50.60400000   -1.46900000   -0.14200000 H
+ N-NB--0.572700(PDBName=NE2,ResName=HID,ResNum=145)  0   50.49900000   -2.89300000    1.45500000 H
+ H-H4-0.114700(PDBName=HD2,ResName=HID,ResNum=145)   0   48.38100000   -2.99100000    1.49600000 H
+ C-CT--0.024900(PDBName=CA,ResName=SER,ResNum=202)   0   56.08800000    0.44200000   -5.34600000 H
+ C-CT-0.211700(PDBName=CB,ResName=SER,ResNum=202)    0   56.06600000    1.05300000   -3.94200000 H
+ O-OH--0.654600(PDBName=OG,ResName=SER,ResNum=202)   0   54.87100000    1.78800000   -3.72400000 H
+ H-H1-0.084300(PDBName=HA,ResName=SER,ResNum=202)    0   56.20800000    1.17600000   -6.03500000 H
+ H-H1-0.035200(PDBName=HB3,ResName=SER,ResNum=202)   0   56.84400000    1.66600000   -3.84700000 H
+ H-H1-0.035200(PDBName=HB2,ResName=SER,ResNum=202)   0   56.12200000    0.32000000   -3.27200000 H
+ H-HO-0.427500(PDBName=HG,ResName=SER,ResNum=202)    0   54.07615930    1.21637550   -3.52978720 H
+ C-CT-0.056000(PDBName=CB,ResName=GLU,ResNum=219)    0   55.53100000    5.06300000   -6.68700000 H
+ C-CT-0.013600(PDBName=CG,ResName=GLU,ResNum=219)    0   54.16700000    4.77600000   -6.09200000 H
+ C-C-0.805400(PDBName=CD,ResName=GLU,ResNum=219)     0   54.03900000    5.31200000   -4.68000000 H
+ O-O2--0.818800(PDBName=OE1,ResName=GLU,ResNum=219)  0   54.78100000    4.82800000   -3.79600000 H
+ O-O2--0.818800(PDBName=OE2,ResName=GLU,ResNum=219)  0   53.20300000    6.21400000   -4.45300000 H
+ H-HC--0.042500(PDBName=HG2,ResName=GLU,ResNum=219)  0   53.48900000    5.22300000   -6.64100000 H
+ H-HC--0.042500(PDBName=HG3,ResName=GLU,ResNum=219)  0   54.04300000    3.80400000   -6.05200000 H
+ H-HC--0.017300(PDBName=HB3,ResName=GLU,ResNum=219)  0   55.51900000    5.98700000   -7.03600000 H
+ H-HC--0.017300(PDBName=HB2,ResName=GLU,ResNum=219)  0   56.20100000    4.95700000   -5.96900000 H
+ O-OW--0.834000(PDBName=OW,ResName=WAT,ResNum=241)   0   52.70600000    0.23100000   -3.19500000 H
+ H-HO-0.417000(PDBName=HW,ResName=WAT,ResNum=241)    0   52.74700000   -0.68500000   -2.79500000 H
+ H-HO-0.417000(PDBName=H28,ResName=WAT,ResNum=241)   0   52.10709930    0.60602320   -2.48700170 H
+
+ 1 2 1.0 21 1.0
+ 2 3 1.0 6 1.0 22 1.0
+ 3 4 1.0 5 1.0 23 1.0
+ 4 24 1.0 25 1.0 26 1.0
+ 5 27 1.0
+ 6 7 1.0 8 1.0
+ 7 11 1.0
+ 8 9 1.0 12 1.0
+ 9 10 1.0 11 1.0
+ 10
+ 11 13 1.0
+ 12 28 1.0 29 1.0
+ 13 14 1.0 30 1.0
+ 14 15 1.0 16 1.0
+ 15 17 1.0 31 1.0
+ 16 18 1.0 32 1.0
+ 17 19 1.0 33 1.0
+ 18 19 1.0 34 1.0
+ 19 20 1.0
+ 20
+ 21
+ 22
+ 23
+ 24
+ 25
+ 26
+ 27
+ 28
+ 29
+ 30
+ 31
+ 32
+ 33
+ 34
+ 35 36 1.0 37 1.0 38 1.0
+ 36 39 1.0 43 1.0
+ 37
+ 38
+ 39 44 1.0 45 1.0
+ 40 43 1.0
+ 41 42 1.0
+ 42 43 1.0 44 1.0
+ 43
+ 44
+ 45
+ 46 47 1.0 49 1.0
+ 47 48 1.0 50 1.0 51 1.0
+ 48 52 1.0
+ 49
+ 50
+ 51
+ 52
+ 53 54 1.0 60 1.0 61 1.0
+ 54 55 1.0 58 1.0 59 1.0
+ 55 56 1.0 57 1.0
+ 56
+ 57
+ 58
+ 59
+ 60
+ 61
+ 62 63 1.0 64 1.0
+ 63
+ 64
+
+
+NonBon 3 1 0 0 0.000 0.000 0.500 0.000 0.000 -1.000
+HrmStr1 CT CK  400.00 1.478
+HrmStr1 OH CA  400.00 1.376
+HrmStr1 CD CC  400.00 1.389
+HrmStr1 HA CD  400.00 1.032
+HrmStr1 CD CA  400.00 1.423
+HrmStr1 OW HO  400.00 1.000
+HrmStr1 CC C   400.00 1.494
+HrmBnd1 CK NB  CC  100.00 106.991
+HrmBnd1 CD CA  CA  100.00 121.854
+HrmBnd1 N* C   CC  100.00 104.323
+HrmBnd1 NB CK  CT  100.00 123.799
+HrmBnd1 N  CT  CK  100.00 107.348
+HrmBnd1 CC CD  CA  100.00 132.223
+HrmBnd1 O  C   CC  100.00 130.410
+HrmBnd1 HO OW  HO  100.00 110.827
+HrmBnd1 O  C   CA  100.00 122.040
+HrmBnd1 N* CT  C   100.00 119.400
+HrmBnd1 CK N*  C   100.00 104.499
+HrmBnd1 NB CC  CD  100.00 128.479
+HrmBnd1 H1 CT  CK  100.00 107.820
+HrmBnd1 HO OH  CA  100.00 109.157
+HrmBnd1 CD CC  C   100.00 121.755
+HrmBnd1 HA CD  CA  100.00 113.888
+HrmBnd1 HA CD  CC  100.00 113.888
+HrmBnd1 OH CA  CA  100.00 119.818
+HrmBnd1 NB CC  C   100.00 109.758
+HrmBnd1 N* CK  CT  100.00 121.786
+HrmBnd1 CT CT  CK  100.00 114.053
+AmbTrs N* CT  CT  HO  180   0     0     0     4.000  0.00   0.00   0.00   -1.0
+AmbTrs N* CT  H1  HO  0     0     0     0     0.00   0.00   4.000  0.00   -1.0
+AmbTrs CT CT  CK  HO  180   0     0     0     4.000  0.00   0.00   0.00   -1.0
+AmbTrs H1 CT  CK  HO  0     0     0     0     0.00   4.000  0.00   0.00   -1.0
+AmbTrs O  CT  N*  HO  0     0     0     0     0.00   0.00   4.000  0.00   -1.0
+AmbTrs CK N   C   HO  0     180   0     0     0.00   4.000  0.00   0.00   -1.0
+AmbTrs CK C   CC  HO  180   0     0     0     4.000  0.00   0.00   0.00   -1.0
+AmbTrs NB CT  N   HO  0     0     0     0     4.000  0.00   0.00   0.00   -1.0
+AmbTrs CD CA  CA  HO  180   0     0     0     4.000  0.00   0.00   0.00   -1.0
+AmbTrs NB CD  HA  HO  180   0     0     0     4.000  0.00   0.00   0.00   -1.0
+AmbTrs O  CA  CA  HO  180   0     0     0     4.000  0.00   0.00   0.00   -1.0
+AmbTrs OH CA  CA  HO  180   0     0     0     4.000  0.00   0.00   0.00   -1.0
+AmbTrs CK CC  C   HO  180   0     0     0     4.000  0.00   0.00   0.00   -1.0
+AmbTrs O  CA  HA  HO  180   0     0     0     4.000  0.00   0.00   0.00   -1.0
+AmbTrs HA CA  CD  HO  180   0     0     0     4.000  0.00   0.00   0.00   -1.0
+AmbTrs HA CC  C   HO  180   0     0     0     4.000  0.00   0.00   0.00   -1.0
+AmbTrs H  CT  CK  HO  0     0     0     0     0.00   4.000  0.00   0.00   -1.0
+AmbTrs CK CT  C   HO  0     0     0     0     4.000  0.00   0.00   0.00   -1.0
+AmbTrs N  CT  N*  HO  0     0     0     0     0.00   0.00   4.000  0.00   -1.0
+AmbTrs CC CA  CA  HO  180   0     0     0     4.000  0.00   0.00   0.00   -1.0
+AmbTrs C  CT  C   HO  0     0     0     0     4.000  0.00   0.00   0.00   -1.0
+AmbTrs NB CT  CT  HO  180   0     0     0     4.000  0.00   0.00   0.00   -1.0
+AmbTrs O  N*  CK  HO  180   0     0     0     4.000  0.00   0.00   0.00   -1.0
+AmbTrs N  CK  N*  HO  0     0     0     0     4.000  0.00   0.00   0.00   -1.0
+AmbTrs NB C   N*  HO  180   0     0     0     4.000  0.00   0.00   0.00   -1.0
+AmbTrs N* NB  CC  HO  180   0     0     0     4.000  0.00   0.00   0.00   -1.0
+AmbTrs NB CD  CA  HO  180   0     0     0     4.000  0.00   0.00   0.00   -1.0
+AmbTrs HA CA  CA  HO  180   0     0     0     4.000  0.00   0.00   0.00   -1.0
+AmbTrs O  CC  NB  HO  180   0     0     0     4.000  0.00   0.00   0.00   -1.0
+AmbTrs O  CC  CD  HO  180   0     0     0     4.000  0.00   0.00   0.00   -1.0
+AmbTrs NB N*  C   HO  180   0     0     0     4.000  0.00   0.00   0.00   -1.0
+AmbTrs CK CC  CD  HO  180   0     0     0     4.000  0.00   0.00   0.00   -1.0
+AmbTrs HO CA  CA  HO  180   0     0     0     4.000  0.00   0.00   0.00   -1.0
+AmbTrs N* CC  CD  HO  180   0     0     0     4.000  0.00   0.00   0.00   -1.0
+AmbTrs OH CA  HA  HO  180   0     0     0     4.000  0.00   0.00   0.00   -1.0
+AmbTrs OH CT  CK  HO  0     0     0     0     0.00   4.000  0.00   0.00   -1.0
+AmbTrs CT NB  CC  HO  180   0     0     0     4.000  0.00   0.00   0.00   -1.0
+AmbTrs CT CK  CT  HO  180   0     0     0     4.000  0.00   0.00   0.00   -1.0
+AmbTrs CT C   CC  HO  180   0     0     0     4.000  0.00   0.00   0.00   -1.0
+AmbTrs NB CT  H1  HO  0     0     0     0     0.00   0.00   4.000  0.00   -1.0
+AmbTrs CA CC  C   HO  180   0     0     0     4.000  0.00   0.00   0.00   -1.0
+AmbTrs CT N*  C   HO  180   0     0     0     4.000  0.00   0.00   0.00   -1.0
+
+
+
+
+
+

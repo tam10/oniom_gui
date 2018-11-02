@@ -8,15 +8,15 @@ Prefab:
     m_TransformParent: {fileID: 0}
     m_Modifications: []
     m_RemovedComponents: []
-  m_ParentPrefab: {fileID: 0}
+  m_SourcePrefab: {fileID: 0}
   m_RootGameObject: {fileID: 1066401964479822}
-  m_IsPrefabParent: 1
+  m_IsPrefabAsset: 1
 --- !u!1 &1066401964479822
 GameObject:
   m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
+  m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  serializedVersion: 5
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 4982069463249670}
   - component: {fileID: 114659169065014852}
@@ -30,7 +30,7 @@ GameObject:
 --- !u!4 &4982069463249670
 Transform:
   m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
+  m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1066401964479822}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
@@ -43,7 +43,7 @@ Transform:
 --- !u!114 &114659169065014852
 MonoBehaviour:
   m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
+  m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1066401964479822}
   m_Enabled: 1
@@ -51,5 +51,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8ab3af773d0a748a0b37fd815d24e994, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  neighbourCount: 
+  fiveMemberedRings: []
+  sixMemberedRings: []
   atoms: {fileID: 0}
-  size: 0
+  connectionPrefab: {fileID: 114607402347753544, guid: 9adb1ea2f9b174ae9a43a9a05dbbdf1f,
+    type: 2}
+  connectionsHolder: {fileID: 0}
+  parameters: {fileID: 0}
+  amberEnvironmentPrefab: {fileID: 114792057877026784, guid: cbbe70bc5fb0f47c0b50c5e58f80c952,
+    type: 2}
+  amberEnvironment: {fileID: 0}
+  bondTypes: {fileID: 114228266962628768, guid: 35952adc3dde044b185694db45c6dbee,
+    type: 2}
+  amberEnergy: 0
+  allStretchesEnergy: 0
+  allBendsEnergy: 0
+  allTorsionsEnergy: 0
+  allVdwsEnergy: 0
+  allCoulombicEnergy: 0
+  showLines: 0

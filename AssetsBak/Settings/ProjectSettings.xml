@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+
+<projectSettings>
+	<protonation>
+		<pdb2pqr>
+			<command>pdb2pqr</command>
+			<option>--ff=amber</option>
+			<option>--ffout=amber</option>
+			<option>--chain</option>
+			<pH>7.0</pH>
+		</pdb2pqr>
+	</protonation>
+
+	<graphics>
+		<graphicsSettingsFilename>Graphics.xml</graphicsSettingsFilename>
+	</graphics>
+
+</projectSettings>

@@ -128,10 +128,14 @@ public class Parameters : MonoBehaviour {
 			paramsSB.Append (improperTorsion.GetGaussianParamStr ());
 		foreach (VdW vdw in vdws)
 			paramsSB.Append (vdw.GetGaussianParamStr ());
+
+		
+
 		return paramsSB.ToString();
 	}
 
 	public void UpdateParameters(Parameters other, bool replace=false) {
+
 		if (replace)
 			this.nonbonding = other.nonbonding;
 		
@@ -165,10 +169,8 @@ public class Parameters : MonoBehaviour {
 		for (int otherIndex = 0; otherIndex < other.torsions.Count; otherIndex++) {
 			int thisIndex = IndexTorsion (other.torsions [otherIndex]);
 			if (thisIndex == -1) {
-				Debug.Log ("New Torsion: " + other.torsions [otherIndex].ToString ());
 				this.torsions.Add (other.torsions [otherIndex].Copy ());
 			} else if (replace) {
-				Debug.Log ("Replaced Torsion: " + other.torsions [otherIndex].ToString ());
 				this.torsions [thisIndex] = other.torsions [otherIndex].Copy ();
 			}
 		}
@@ -182,6 +184,56 @@ public class Parameters : MonoBehaviour {
 			}
 		}
 
+	}
+
+	public void AddVdW(VdW newVdw) {
+		foreach (VdW vdw in vdws) {
+			if (vdw.TypeEquivalent(newVdw)) {
+				throw new System.Exception("VdW already exists in Parameters set");
+			}
+		}
+		vdws.Add(newVdw);
+	}
+
+	public void AddStretch(Stretch newStretch) {
+		
+		foreach (Stretch stretch in stretches) {
+			if (stretch.TypeEquivalent(newStretch)) {
+				throw new System.Exception("Stretch already exists in Parameters set");
+			}
+		}
+		stretches.Add(newStretch);
+	}
+
+	public void AddBend(Bend newBend) {
+		foreach (Bend bend in bends) {
+			if (bend.TypeEquivalent(newBend)) {
+				throw new System.Exception("Bend already exists in Parameters set");
+			}
+		}
+		bends.Add(newBend);
+	}
+
+	public void AddTorsion(Torsion newTorsion) {
+		foreach (Torsion torsion in torsions) {
+			if (torsion.TypeEquivalent(newTorsion)) {
+				throw new System.Exception("Torsion already exists in Parameters set");
+			}
+		}
+		torsions.Add(newTorsion);
+	}
+
+	public void AddImproperTorsion(ImproperTorsion newImproperTorsion) {
+		foreach (ImproperTorsion improperTorsion in improperTorsions) {
+			if (improperTorsion.TypeEquivalent(newImproperTorsion)) {
+				throw new System.Exception("ImproperTorsion already exists in Parameters set");
+			}
+		}
+		improperTorsions.Add(newImproperTorsion);
+	}
+
+	public void SetNonBonding(int vType=3, int cType=1, int vCutoff=0, int cCutoff=0, float vScale1=0f, float vScale2=0f, float vScale3=0.5f, float cScale1=0f, float cScale2=0f, float cScale3=-1.2f) {
+		this.nonbonding = new NonBonding(vType, cType, vCutoff, cCutoff, vScale1, vScale2, vScale3, cScale1, cScale2, cScale3);
 	}
 
 }
@@ -233,11 +285,11 @@ public class Stretch {
 	}
 
 	public string GetGaussianParamStr() {
-		return string.Format ("HrmStr1 {0,-2} {1,-2} {2,7:F4} {3,7:F4}\n", t0, t1, req, keq);
+		return string.Format ("HrmStr1 {0,-2} {1,-2} {2,7:F4} {3,7:F4}\n", t0, t1, keq, req);
 	}
 
 	public override string ToString () {
-		return string.Format ("Stretch(t0 = {0}, t1 = {1}), req = {2}, keq = {3}", t0, t1, req, keq);
+		return string.Format ("Stretch(t0 = {0}, t1 = {1}, req = {2}, keq = {3})", t0, t1, req, keq);
 	}
 
 	public Stretch Copy() {
@@ -252,6 +304,24 @@ public class Bend {
 	public string t2;
 	public float req;
 	public float keq;
+	public int wildcardCount {
+		get {
+			return 
+			(t0 == "*" ? 1 : 0) + 
+			(t1 == "*" ? 1 : 0) + 
+			(t2 == "*" ? 1 : 0);
+		}
+	}
+	public List<string> types {
+		get {
+			return new List<string>() {t0, t1, t2};
+		}
+	}
+	public List<string> reverseTypes {
+		get {
+			return new List<string>() {t2, t1, t0};
+		}
+	}
 
 	public Bend(string t0, string t1, string t2, float req, float keq) {
 		this.t0 = t0;
@@ -262,21 +332,15 @@ public class Bend {
 	}
 
 	public bool TypeEquivalent(Bend other) {
-		if (this.t1 != other.t1)
-			return false;
-		if (this.t0 == other.t0 && this.t2 == other.t2)
-			return true;
-		if (this.t0 == other.t2 && this.t2 == other.t0)
-			return true;
-		return false;
+		return this.types == other.types || this.types == other.reverseTypes;
 	}
 
 	public string GetGaussianParamStr() {
-		return string.Format ("HrmBnd1 {0,-2} {1,-2} {2,-2} {3,7:F4} {4,7:F4}\n", t0, t1, t2, req, keq);
+		return string.Format ("HrmBnd1 {0,-2} {1,-2} {2,-2} {3,7:F4} {4,7:F4}\n", t0, t1, t2, keq, req);
 	}
 
 	public override string ToString () {
-		return string.Format ("Bend(t0 = {0}, t1 = {1}), t2 = {2}, req = {3}, keq = {4}", t0, t1, t2, req, keq);
+		return string.Format ("Bend(t0 = {0}, t1 = {1}, t2 = {2}, req = {3}, keq = {4})", t0, t1, t2, req, keq);
 	}
 
 	public Bend Copy() {
@@ -298,6 +362,25 @@ public class Torsion {
 	public float gamma2;
 	public float gamma3;
 	public int npaths;
+	public int wildcardCount {
+		get {
+			return 
+			(t0 == "*" ? 1 : 0) + 
+			(t1 == "*" ? 1 : 0) + 
+			(t2 == "*" ? 1 : 0) + 
+			(t3 == "*" ? 1 : 0);
+		}
+	}
+	public List<string> types {
+		get {
+			return new List<string>() {t0, t1, t2, t3};
+		}
+	}
+	public List<string> reverseTypes {
+		get {
+			return new List<string>() {t3, t2, t1, t0};
+		}
+	}
 
 	public Torsion(string t0, string t1, string t2, string t3, float v0=0f, float v1=0f, float v2=0f, float v3=0f, float gamma0=0f, float gamma1=0f, float gamma2=0f, float gamma3=0f, int npaths=0) {
 		this.t0 = t0;
@@ -332,11 +415,7 @@ public class Torsion {
 	}
 
 	public  bool TypeEquivalent(Torsion other) {
-		if (this.t0 == other.t0 && this.t1 == other.t1  && this.t2 == other.t2  && this.t3 == other.t3)
-			return true;
-		if (this.t0 == other.t3 && this.t1 == other.t2  && this.t2 == other.t1  && this.t3 == other.t0)
-			return true;
-		return false;
+		return this.types == other.types || this.types == other.reverseTypes;
 	}
 
 	public string GetGaussianParamStr() {
@@ -361,6 +440,26 @@ public class ImproperTorsion {
 	public float gamma;
 	public int periodicity;
 
+	public int wildcardCount {
+		get {
+			return 
+			(t0 == "*" ? 1 : 0) + 
+			(t1 == "*" ? 1 : 0) + 
+			(t2 == "*" ? 1 : 0) + 
+			(t3 == "*" ? 1 : 0);
+		}
+	}
+	public List<string> types {
+		get {
+			return new List<string>() {t0, t1, t2, t3};
+		}
+	}
+	public List<string> reverseTypes {
+		get {
+			return new List<string>() {t3, t2, t1, t0};
+		}
+	}
+
 	public ImproperTorsion(string t0, string t1, string t2, string t3, float v, float gamma, int periodicity) {
 		this.t0 = t0;
 		this.t1 = t1;
@@ -372,11 +471,7 @@ public class ImproperTorsion {
 	}
 
 	public  bool TypeEquivalent(ImproperTorsion other) {
-		if (this.t0 == other.t0 && this.t1 == other.t1  && this.t2 == other.t2  && this.t3 == other.t3)
-			return true;
-		if (this.t0 == other.t3 && this.t1 == other.t2  && this.t2 == other.t1  && this.t3 == other.t0)
-			return true;
-		return false;
+		return this.types == other.types || this.types == other.reverseTypes;
 	}
 
 	public string GetGaussianParamStr() {
@@ -397,32 +492,40 @@ public class NonBonding {
 	public int cType;
 	public int vCutoff;
 	public int cCutoff;
-	public float vScale1;
-	public float vScale2;
-	public float vScale3;
-	public float cScale1;
-	public float cScale2;
-	public float cScale3;
+	public float[] vScales;
+	public float[] cScales;
 
-	public NonBonding(
-		int vType=3, int cType=1, int vCutoff=0, int cCutoff=0, float vScale1=0f, float vScale2=0f, float vScale3=0.5f, float cScale1=0f, float cScale2=0f, float cScale3=-1.2f) {
+	public NonBonding(int vType=3, int cType=1, int vCutoff=0, int cCutoff=0, float vScale1=0f, float vScale2=0f, float vScale3=0.5f, float cScale1=0f, float cScale2=0f, float cScale3=-1.2f) {
 		this.vType = vType;
 		this.cType = cType;
 		this.vCutoff = vCutoff;
 		this.cCutoff = cCutoff;
-		this.vScale1 = vScale1;
-		this.vScale2 = vScale2;
-		this.vScale3 = vScale3;
-		this.cScale1 = cScale1;
-		this.cScale2 = cScale2;
-		this.cScale3 = cScale3;
+
+		/* 
+		These are the scale factors for VdW and Coulombic interactions:
+		Index 0: All interactions not listed below
+		Index 1: Interactions 1 atom away
+		Index 2: Interactions 2 atoms away
+		Index 3: Interactions 3 atoms away
+		*/
+		this.vScales = new float[4] {1f, vScale1, vScale2, vScale3};
+		this.cScales = new float[4] {1f, cScale1, cScale2, cScale3};
 	}
 
 	public string GetGaussianParamStr() {
-		return string.Format ("NonBon {0:D} {1:D} {2:D} {3:D} {4,7:F4} {5,7:F4} {6,7:F4} {7,7:F4} {8,7:F4} {9,7:F4}\n", vType, cType, vCutoff, cCutoff, vScale1, vScale2, vScale3, cScale1, cScale2, cScale3);
+		return string.Format ("NonBon {0:D} {1:D} {2:D} {3:D} {4,7:F4} {5,7:F4} {6,7:F4} {7,7:F4} {8,7:F4} {9,7:F4}\n", vType, cType, vCutoff, cCutoff, vScales[1], vScales[2], vScales[3], cScales[1], cScales[2], cScales[3]);
 	}
 
 	public override string ToString () {
-		return string.Format ("NonBonding(vType = {0}, cType = {1}, vCutoff = {2}, cCutoff = {3}, vScale1 = {4}, vScale2 = {5}, vScale3 = {6}, cScale1 = {7}, cScale2 = {8}, cScale3 = {9})", vType, cType, vCutoff, cCutoff, vScale1, vScale2, vScale3, cScale1, cScale2, cScale3);
+		return string.Format ("NonBonding(vType = {0}, cType = {1}, vCutoff = {2}, cCutoff = {3}, vScale1 = {4}, vScale2 = {5}, vScale3 = {6}, cScale1 = {7}, cScale2 = {8}, cScale3 = {9})", vType, cType, vCutoff, cCutoff, vScales[1], vScales[2], vScales[3], cScales[1], cScales[2], cScales[3]);
+	}
+}
+
+public class WildCardEqualityComparer : IEqualityComparer<string> {
+	public bool Equals(string s0, string s1) {
+		return s0 == s1 || s0 == "*" || s1 == "*";
+	}
+	public int GetHashCode(string s0) {
+		return s0.GetHashCode();
 	}
 }
