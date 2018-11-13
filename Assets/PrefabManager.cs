@@ -14,4 +14,5 @@ public class PrefabManager : MonoBehaviour {
 	public AmberEnvironment amberEnvironmentPrefab;
 	public Connection connectionPrefab;
 	
+	public SelectionHalo selectionHaloPrefab;
 }

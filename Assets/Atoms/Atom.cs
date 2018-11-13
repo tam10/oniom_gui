@@ -15,6 +15,8 @@ public class Atom : MonoBehaviour {
 	public Vector3 acceleration;
 	public Vector3 velocity;
 	public Vector3 force;
+	public float mdDampingFactor;
+	public float mdTimeStep;
 	float dt;
 
 	public List<Connection> connections;
@@ -248,19 +250,22 @@ public class Atom : MonoBehaviour {
 		force = Vector3.zero;
 		velocity = Vector3.zero;
 		mass = 100f;
+		mdDampingFactor = 0f;
+		mdTimeStep = 1f;
 	}
 
 	void Update() {
 
 		if (mobile) {
-			dt = Time.deltaTime * parent.globalSettings.mdTimeStep;
+			dt = Time.deltaTime * mdTimeStep;
 
 			transform.position += dt * (velocity + dt * acceleration * 0.5f);
 
 			velocity += 0.5f * dt * (acceleration + force / mass);
+			velocity *= mdDampingFactor;
 
 			acceleration = force / mass;
-			Debug.DrawLine(p, p + force, Color.red);
+			//Debug.DrawLine(p, p + force, Color.red);
 
 		}
 

@@ -4,52 +4,51 @@ using UnityEngine;
 
 public class SelectionHalo : MonoBehaviour {
 
-	public ParticleSystem hoverHalo;
-	public ParticleSystem.EmissionModule emissionModule;
-	private ParticleSystem.MainModule main;
-	private ParticleSystem.ShapeModule shape;
+	public SpriteRenderer spriteRenderer;
 
 	public Camera activeCamera;
+	public Atoms parent;
 
 	public float sizeRatio;
-
-	private Atom atom;
+	private float rotationSpeed;
+	private Vector3 rotation;
+	public float brightness = 1.5f;
 
 	// Use this for initialization
-	void Awake () {
-		emissionModule = hoverHalo.emission;
-		main = hoverHalo.main;
-		shape = hoverHalo.shape;
-		sizeRatio = 2f;
+	public void Awake () {
+		sizeRatio = 0.8f;
+		activeCamera = Camera.main;
+		rotationSpeed = 90f;
+		rotation = new Vector3();
 	}
 
 	public void SetColor(Color newColor) {
-		main.startColor = newColor;
+		spriteRenderer.color = newColor * Mathf.LinearToGammaSpace(brightness);
 	}
 
 	public void SetSpeed(float newSpeed) {
-		shape.arcSpeed = newSpeed;
+		rotationSpeed = newSpeed;
 	}
 
 	public void SetRadius(float newRadius) {
-		shape.radius = newRadius;
-		main.startSize = newRadius;
+		transform.localScale = new Vector3(newRadius, newRadius, 1f);
 	}
 
 	public void SetAtom(Atom atom) {
 		transform.position = atom.transform.position;
 		SetRadius(atom.vdwRadius * atom.vdwToSphereRatio * sizeRatio);
-		hoverHalo.Clear ();
-		emissionModule.enabled = true;
-		hoverHalo.Play ();
+		spriteRenderer.enabled = true;
 	}
 
 	public void ClearAtom() {
-		emissionModule.enabled = false;
+		spriteRenderer.enabled = false;
 	}
 	
 	// Update is called once per frame
 	void Update () {
-		transform.rotation = activeCamera.transform.rotation;
+		rotation.x = activeCamera.transform.eulerAngles.x;
+		rotation.y = activeCamera.transform.eulerAngles.y;
+		rotation.z = - parent.haloZSyncTime * rotationSpeed;
+		transform.eulerAngles = rotation;
 	}
 }

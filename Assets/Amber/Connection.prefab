@@ -130,8 +130,6 @@ MonoBehaviour:
   parent: {fileID: 0}
   atom0: {fileID: 0}
   atom1: {fileID: 0}
-  a0: 0
-  a1: 0
   bondOrder: 0
   resolution: 0
   color0: {r: 0, g: 0, b: 0, a: 0}

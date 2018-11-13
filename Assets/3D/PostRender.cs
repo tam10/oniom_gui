@@ -50,13 +50,13 @@ public class PostRender : MonoBehaviour {
 	}
 
 	void OnDrawGizmos() {
-/* 
+ 
 		try {
 			DrawGLConnections();
 		} catch {
 			return;
 		}
-*/
+
 	}
 
 	void DrawGLConnections() {

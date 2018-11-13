@@ -55,12 +55,9 @@ MonoBehaviour:
   fiveMemberedRings: []
   sixMemberedRings: []
   atoms: {fileID: 0}
-  connectionPrefab: {fileID: 114607402347753544, guid: 9adb1ea2f9b174ae9a43a9a05dbbdf1f,
-    type: 2}
   connectionsHolder: {fileID: 0}
+  connectionPrefab: {fileID: 0}
   parameters: {fileID: 0}
-  amberEnvironmentPrefab: {fileID: 114792057877026784, guid: cbbe70bc5fb0f47c0b50c5e58f80c952,
-    type: 2}
   amberEnvironment: {fileID: 0}
   bondTypes: {fileID: 114228266962628768, guid: 35952adc3dde044b185694db45c6dbee,
     type: 2}
@@ -70,4 +67,5 @@ MonoBehaviour:
   allTorsionsEnergy: 0
   allVdwsEnergy: 0
   allCoulombicEnergy: 0
+  amberGradient: 0
   showLines: 0

@@ -3,7 +3,10 @@ guid: 096947fdbfb284f2eabd635e03fb9b7c
 MonoImporter:
   externalObjects: {}
   serializedVersion: 2
-  defaultReferences: []
+  defaultReferences:
+  - hoverHalo: {fileID: 198837186807460310, guid: 36015cc4d4a7d418b8df58dc842f8a58,
+      type: 2}
+  - activeCamera: {instanceID: 0}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 

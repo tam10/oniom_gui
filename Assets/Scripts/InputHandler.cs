@@ -4,8 +4,6 @@ using UnityEngine;
 
 public class InputHandler : MonoBehaviour {
 
-	public GameObject haloHolder;
-	public SelectionHalo hoverHalo;
 	public Camera activeCamera;
 	public Vector3 worldMousePosition;
 	public Vector3 screenMousePosition;
@@ -15,6 +13,7 @@ public class InputHandler : MonoBehaviour {
 	public int numHits;
 
 	private MouseCollider mouseCollider;
+	public Atoms activeAtoms;
 	private Atom hitAtom;
 	private Atom closestAtom;
 	private float angle;
@@ -34,8 +33,6 @@ public class InputHandler : MonoBehaviour {
 
 	private bool dragged;
 	private bool clicked;
-	private Dictionary<int, SelectionHalo> selectionDict;
-	public Color selectionColor = new Color(0.5f, 0f, 1f, 0.2f);
 
 	public float dragThreshold = 0.5f;
 
@@ -43,11 +40,16 @@ public class InputHandler : MonoBehaviour {
 		frameNum = 0;
 		dragged = false;
 		clicked = false;
-		selectionDict = new Dictionary<int, SelectionHalo>();
 	}
 
 	// Update is called once per frame
 	void Update () {
+
+		//Handle key presses
+		if (Input.GetKeyDown(KeyCode.Escape)) {
+			if (activeAtoms)
+				activeAtoms.ClearSelection();
+		}
 
 		//Keep track of mouse position here
 		screenMousePosition = Input.mousePosition;
@@ -79,78 +81,66 @@ public class InputHandler : MonoBehaviour {
 		oldLeftClickDown = leftClickDown;
 		
 		//Get hovered atom
-		frameNum++;
-		if (frameNum == framesUntilRefresh) {
-			frameNum = 0;
-		} else {
-
-			ray = activeCamera.ScreenPointToRay (screenMousePosition);
-
-			RaycastHit[] hitInfos;
-			hitInfos = Physics.RaycastAll (ray);
-			numHits = hitInfos.Length;
-
-			if (numHits > 0) {
-
-				closestAtom = null;
-				hitAtom = null;
-
-				closestAngle = 90f;
-
-				for (int i = 0; i < numHits; i++) {
-
-					hitInfo = hitInfos [i];
-					mouseCollider = hitInfo.collider.gameObject.GetComponent<MouseCollider> ();
-
-					if (mouseCollider == null)
-						continue;
-
-					hitAtom = mouseCollider.parent;
-
-					//Make sure the atom that's closest to the cursor is selected
-					angle = Vector3.Angle (ray.direction, hitAtom.transform.position - activeCamera.transform.position);
-					if (angle > closestAngle)
-						continue;
-
-					closestAtom = hitAtom;
-					closestAtomIndex = hitAtom.index;
-					closestAngle = angle;
-				}
-
-				if (closestAtom != null) {
-					if (closestAtomIndex != hitAtom.parent.hoveredAtom) {
-						hitAtom.parent.hoveredAtom = closestAtomIndex;
-						hoverHalo.SetAtom(closestAtom);
-						hoverHalo.sizeRatio = 2.4f;
-						
-					}
-					
-					if (clicked) {
-							if (closestAtom.parent.selection.Contains(closestAtomIndex)) {
-								closestAtom.parent.selection.Remove(closestAtomIndex);
-								GameObject.Destroy(selectionDict[closestAtomIndex].gameObject);
-								selectionDict.Remove(closestAtomIndex);
-							} else {
-								closestAtom.parent.selection.Add(closestAtomIndex);
-								SelectionHalo newHalo = Instantiate<SelectionHalo>(hoverHalo, haloHolder.transform);
-								newHalo.SetColor(selectionColor);
-								newHalo.SetAtom(closestAtom);
-								newHalo.sizeRatio = 2.2f;
-
-								selectionDict.Add(closestAtomIndex, newHalo);
-							}
-						}
-				}
-
+		if (activeAtoms != null) {
+			frameNum++;
+			if (frameNum == framesUntilRefresh) {
+				frameNum = 0;
 			} else {
-				if (hitAtom != null)
-					hitAtom.parent.hoveredAtom = -1;
-				hoverHalo.ClearAtom();
+
+				ray = activeCamera.ScreenPointToRay (screenMousePosition);
+
+				//MOVE ALL HOVER HALOES TO ATOMS
+
+				RaycastHit[] hitInfos;
+				hitInfos = Physics.RaycastAll (ray);
+				numHits = hitInfos.Length;
+
+				if (numHits > 0) {
+
+					closestAtom = null;
+					hitAtom = null;
+
+					closestAngle = 90f;
+
+					for (int i = 0; i < numHits; i++) {
+
+						hitInfo = hitInfos [i];
+						mouseCollider = hitInfo.collider.gameObject.GetComponent<MouseCollider> ();
+
+						if (mouseCollider == null)
+							continue;
+
+						hitAtom = mouseCollider.parent;
+
+						if (hitAtom.parent != activeAtoms)
+							continue;
+
+						//Make sure the atom that's closest to the cursor is selected
+						angle = Vector3.Angle (ray.direction, hitAtom.transform.position - activeCamera.transform.position);
+						if (angle > closestAngle)
+							continue;
+
+						closestAtom = hitAtom;
+						closestAtomIndex = hitAtom.index;
+						closestAngle = angle;
+					}
+
+					if (closestAtom != null) {
+						if (closestAtomIndex != activeAtoms.hoveredAtom) {
+							activeAtoms.hoveredAtom = closestAtomIndex;
+						}
+						
+						if (clicked) {
+							activeAtoms.ToggleSelect(closestAtomIndex);
+						}
+					}
+
+				} else {
+					if (hitAtom != null)
+						activeAtoms.hoveredAtom = -1;
+				}
 			}
-				
-
 		}
-
 		//if (Physics.Raycast (ray, out hitInfo)) {
 		//	MouseCollider hoveredAtomCollider = hitInfo.collider.gameObject.GetComponent<MouseCollider> ();
 		//

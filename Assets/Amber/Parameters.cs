@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class Parameters : MonoBehaviour {
 
-	public float dielectricConstant;
+	public double dielectricConstant;
 
 	public List<VdW> vdws;
 	public List<Stretch> stretches;
@@ -21,7 +21,7 @@ public class Parameters : MonoBehaviour {
 		bends = new List<Bend> ();
 		torsions = new List<Torsion> ();
 		improperTorsions = new List<ImproperTorsion> ();
-		dielectricConstant = 1f;
+		dielectricConstant = 1.0;
 	}
 
 	public bool ContainsVdW(VdW otherVdW) {

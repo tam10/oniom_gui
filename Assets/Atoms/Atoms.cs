@@ -29,7 +29,29 @@ public class Atoms : MonoBehaviour {
 	//Mesh
 	public Mesh combinedMesh;
 
+	//Amber Reps
+	public MeshFilter amberRepMeshFilter;
+	public Mesh amberRepMesh;
+
+	private Connection stretchConnection;
+	private bool showStretchRep;
+	public Vector3 stretchRepForward;
+	public Vector3 stretchRepUp;
+
+
+
 	public PostRender postRenderer;
+
+	public GameObject haloHolder;
+	private SelectionHalo hoverHalo;
+	public float haloZSyncTime;
+
+
+	private Dictionary<int, SelectionHalo> selectionDict;
+	public Color hoverColor = new Color(1.2f, 0.7f, 0.2f, 0.5f);
+	public Color selectionColor = new Color(0.3f, 0.3f, 1.2f, 0.5f);
+
+	private int selectionCount;
 
 	//_busy is a counter, counting the depth of demanding scripts currently running in this object
 	private int _busy;
@@ -37,10 +59,40 @@ public class Atoms : MonoBehaviour {
 		get { return (_busy > 0); }
 	}
 
-	public int hoveredAtom;
+	private bool _active;
+	public bool active {
+		get { return _active;}
+		set { 
+			if (value) {
+				if (!_active) {
+
+				}
+			} else {
+				if (active) {
+					ClearSelection();
+				}
+			}
+			_active = value;
+		}
+	}
+
+	private int _hoveredAtom;
+	public int hoveredAtom {
+		get {return _hoveredAtom;}
+		set {
+			_hoveredAtom = value;
+			if (value == -1) {
+				hoverHalo.ClearAtom();
+			} else {
+				hoverHalo.SetAtom(this[value]);
+			}
+		}
+	}
 
 	void Awake() {
 		_busy++;
+
+		active = false;
 
 		atomList = new List<Atom> ();
 		userSelection = new List<int>();
@@ -51,8 +103,19 @@ public class Atoms : MonoBehaviour {
 		graph = Instantiate<Graph> (GameObject.FindObjectOfType<PrefabManager>().graphPrefab, transform);
 
 		combinedMesh = GetComponent<MeshFilter> ().mesh;
+		amberRepMesh = amberRepMeshFilter.mesh;
 
-		hoveredAtom = -1;
+		selectionDict = new Dictionary<int, SelectionHalo>();
+
+		_hoveredAtom = -1;
+
+		activeCamera = Camera.main;
+
+		hoverHalo = Instantiate<SelectionHalo>(GameObject.FindObjectOfType<PrefabManager>().selectionHaloPrefab, haloHolder.transform);
+		hoverHalo.parent = this;
+		hoverHalo.SetColor(hoverColor);
+
+		selectionCount = 0;
 
 		_busy--;
 	}
@@ -129,6 +192,17 @@ public class Atoms : MonoBehaviour {
 	public Vector3 centre {
 		get {
 			return GetCentre ();
+		}
+	}
+
+	public double[] masses {
+		get {
+			int _size = size;
+			double[] masses = new double[_size];
+			for (int atomNum=0; atomNum < _size; atomNum++) {
+				masses[atomNum] = this[atomNum].mass;
+			}
+			return masses;
 		}
 	}
 
@@ -245,21 +319,72 @@ public class Atoms : MonoBehaviour {
 		}
 	}
 
-	//Connectivity
-	public void Connect(int a0, int a1, int bondOrder=1) {
-		if (bondOrder == 0) {
+	//Selection
+	public void Select(int a0, bool updateAmberReps=true) {
+		if (!selection.Contains(a0)) {
+			SelectionHalo newHalo = Instantiate<SelectionHalo>(hoverHalo, haloHolder.transform);
+			newHalo.SetColor(selectionColor);
+			newHalo.SetAtom(this[a0]);
+			newHalo.sizeRatio = 2.2f;
+			newHalo.parent = this;
+			
+			selectionDict.Add(a0, newHalo);
+			selection.Add(a0);
+			selectionCount++;
 
+			if (updateAmberReps)
+				UpdateAmberReps();
 		}
 	}
 
-	public void Disconnect(int a0, int a1) {
-		
+	public void Deselect(int a0, bool updateAmberReps=true) {
+		if (selection.Contains(a0)) { 
+			GameObject.Destroy(selectionDict[a0].gameObject);
+			selectionDict.Remove(a0);
+			selection.Remove(a0);
+			selectionCount--;
+
+			if (updateAmberReps)
+				UpdateAmberReps();
+		}
 	}
 
+	public void ToggleSelect(int a0) {
+		if (selection.Contains(a0)) {
+			Deselect(a0);
+		} else {
+			Select(a0);
+		}
+	}
 
-	//Selection
-	public void Select(int a0) {
+	public void ClearSelection() {
+		List<int> tSelection = new List<int>(selection);
+		foreach(int i in tSelection) {
+			Deselect(i, false);
+		}
+		UpdateAmberReps();
+	}
 
+	public void UpdateAmberReps() {
+		showStretchRep = false;
+		if (selectionCount == 2) {
+			DrawStretchRep(selection[0], selection[1]);
+		} else {
+			amberRepMesh.Clear();
+		}
+	}
+
+	void Update() {
+		if (active) {
+			haloZSyncTime = Time.deltaTime + haloZSyncTime % 1f;
+
+			if (showStretchRep) {
+				amberRepMeshFilter.transform.LookAt(stretchConnection.atom1.transform);
+				stretchRepForward = amberRepMeshFilter.transform.forward;
+				stretchRepUp = Vector3.Cross(activeCamera.transform.rotation.eulerAngles, stretchRepForward);
+				//amberRepMeshFilter.transform.localRotation = Quaternion.LookRotation(stretchRepForward, stretchRepUp);
+			}
+		}
 	}
 
 	public void SetCentre(Vector3 newCentre) {
@@ -268,5 +393,35 @@ public class Atoms : MonoBehaviour {
 		}
 	}
 
+	void DrawStretchRep(int a0, int a1) {
+
+		List<float> lengths = new List<float>();
+		List<float> energies = new List<float>();
+
+		stretchConnection = graph.GetConnection(a0, a1);
+		if (stretchConnection == null) {
+			return;
+		}
+
+		Stretch stretch = graph.GetStretchParameter(stretchConnection);
+		if (stretch == null) {
+			return;
+		}
+
+		showStretchRep = true;
+		
+		float length = stretch.req - (globalSettings.amberStretchSteps + 1) * globalSettings.amberStretchInterval;
+
+		for (int segmentNum = 0; segmentNum < (globalSettings.amberStretchSteps * 2) + 1; segmentNum++) {
+			lengths.Add(length);
+			energies.Add(Mathematics.EStretch(length, stretch.keq, stretch.req, 0));
+
+			length += globalSettings.amberStretchInterval;
+		}
+
+		StretchRep.GenerateStretchRep(globalSettings.amberRepResolution, globalSettings.amberRepThickness, globalSettings.amberStretchRepOffset, lengths, energies, amberRepMesh);
+
+		amberRepMeshFilter.transform.localPosition = stretchConnection.atom0.p;
+	}
 
 }

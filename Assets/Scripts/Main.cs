@@ -5,6 +5,7 @@ using UnityEngine;
 public class Main : MonoBehaviour {
 
 	public Camera activeCamera;
+	public InputHandler inputHandler;
 
 	public Settings globalSettings;
 	public FileReader fileReader;
@@ -12,7 +13,10 @@ public class Main : MonoBehaviour {
 	public Data data;
 	public PostRender postRenderer;
 	public Protonation protonation;
+	
 	public Tooltip tooltip;
+	public StretchBox stretchBox;
+	public BendBox bendBox;
 	public Status status;
 
 	public string activeJob;
@@ -67,9 +71,10 @@ public class Main : MonoBehaviour {
 		
 
 		//AddToQueue (LoadAtoms ("/Users/tam10/Notebooks/GFPMutation/geo3.com", "com"), "Load Gaussian Input...");
-		//AddToQueue (LoadAtoms ("/Users/tam10/Notebooks/GFPMutation/model_amber2.com", "com"), "Load Gaussian Input...");
 		//AddToQueue (LoadAtoms ("/Users/tristanmackenzie/Unity/ONIOM/model_amber2.com", "com"), "Load Gaussian Input...");
-		AddToQueue (LoadAtoms ("/Users/tristanmackenzie/Unity/ONIOM/geo4.com", "com"), "Load Gaussian Input...");
+		//AddToQueue (LoadAtoms ("/Users/tristanmackenzie/Unity/ONIOM/geo4.com", "com"), "Load Gaussian Input...");
+		//AddToQueue (LoadAtoms ("/Users/tristanmackenzie/Unity/ONIOM/nonbon_test.com", "com"), "Load Gaussian Input...");
+		AddToQueue (LoadAtoms ("/Users/tristanmackenzie/Unity/ONIOM/hooh_test.com", "com"), "Load Gaussian Input...");
 
 		AddToQueue (ActivateAtoms ("com"), "Activate atoms...");
 
@@ -77,9 +82,7 @@ public class Main : MonoBehaviour {
 
 		AddToQueue(AddParametersFromName("com", "amber.prm"), "Adding parameters...");
 
-		AddToQueue(GetAmberEnergy("com", 0, true), "Getting Amber Energy...");
-
-		AddToQueue(MD("com", 5000, true), "Running MD...");
+		AddToQueue(MDVerlet("com", 2500, 1, true), "Running MD...");
 		
 
 
@@ -125,16 +128,85 @@ public class Main : MonoBehaviour {
 			} else {
 				atoms.gameObject.SetActive (true);
 				atoms.graph.showLines = true;
+				atoms.active = true;
 				tooltip.activeAtoms = atoms;
-				atoms.activeCamera = activeCamera;
+				stretchBox.activeAtoms = atoms;
+				bendBox.activeAtoms = atoms;
+				inputHandler.activeAtoms = atoms;
 				atoms.postRenderer = postRenderer;
 
-				//atoms.transform.position = - atoms.centre;
+				IEnumerator iEnumerator = GetBestView(atomsName);
+				while (iEnumerator.MoveNext()) {}
+
 			}
 		} else {
 			Debug.LogErrorFormat ("Atoms ({0}) are not in Atoms Dictionary", atomsName);
 		}
 
+		yield return null;
+
+	}
+
+	IEnumerator GetBestView(string atomsName) {
+
+		Atoms atoms;
+		if (atomsDictionary.TryGetValue (atomsName, out atoms)) {
+
+			if (atoms == null) {
+				Debug.LogErrorFormat ("Could not focus on atoms ({0}) - object is null", atomsName);
+			} else {
+
+				int c;
+				int size = atoms.size;
+				double fov = activeCamera.fieldOfView * Mathf.Deg2Rad;
+				double fill_amount = 0.9f;
+				double min_distance = 10f;
+				double[,] positions = new double[size, 3];
+				double[] new_camera_position = new double[3];
+				for (int atomNum = 0; atomNum < atoms.size; atomNum++) {
+					for (c=0; c<3; c++){
+						positions[atomNum,c] = atoms[atomNum].p[c];
+					}
+				}
+				Fortran.getBestCameraView(positions, ref size, new_camera_position, ref fov, ref fill_amount, ref min_distance);
+				activeCamera.transform.position = new Vector3((float)new_camera_position[0], (float)new_camera_position[1], (float)new_camera_position[2]);
+			}
+		} else {
+			Debug.LogErrorFormat ("Atoms ({0}) are not in Atoms Dictionary", atomsName);
+		}
+
+		yield return null;
+	}
+
+	IEnumerator DeactivateAtoms(string atomsName) {
+
+		Atoms atoms;
+		if (atomsDictionary.TryGetValue (atomsName, out atoms)) {
+
+			if (atoms == null) {
+				Debug.LogErrorFormat ("Atoms ({0}) could not be deactivated - object is null", atomsName);
+			} else {
+			atoms.gameObject.SetActive (false);
+			atoms.graph.showLines = false;
+			atoms.active = false;
+
+			if (tooltip.activeAtoms == atoms)
+				tooltip.activeAtoms = null;
+
+			if (stretchBox.activeAtoms == atoms)
+				stretchBox.activeAtoms = null;
+
+			if (bendBox.activeAtoms == atoms)
+				bendBox.activeAtoms = null;
+
+			if (inputHandler.activeAtoms == atoms)
+				inputHandler.activeAtoms = null;
+
+			atoms.postRenderer = null;
+			}
+		} else {
+			Debug.LogErrorFormat ("Atoms ({0}) are not in Atoms Dictionary", atomsName);
+		}
 		yield return null;
 	}
 
@@ -188,25 +260,6 @@ public class Main : MonoBehaviour {
 
 		yield return null;
 		
-	}
-
-	IEnumerator DeactivateAtoms(string atomsName) {
-
-		Atoms atoms;
-		if (atomsDictionary.TryGetValue (atomsName, out atoms)) {
-
-			if (atoms == null) {
-				Debug.LogErrorFormat ("Atoms ({0}) could not be deactivated - object is null", atomsName);
-			} else {
-			atoms.gameObject.SetActive (false);
-			atoms.graph.showLines = false;
-			atoms.activeCamera = null;
-			atoms.postRenderer = null;
-			}
-		} else {
-			Debug.LogErrorFormat ("Atoms ({0}) are not in Atoms Dictionary", atomsName);
-		}
-		yield return null;
 	}
 
 	IEnumerator ProtonateStandardResidues(string initialAtomsName, string protonatedAtomsName) {
@@ -323,6 +376,22 @@ public class Main : MonoBehaviour {
 				Debug.LogErrorFormat ("Could not initialise MD for ({0})- object is null", atomsName);
 			} else {
 				coroutine = StartCoroutine (atoms.graph.MD2(steps));
+			}
+		} else {
+			Debug.LogErrorFormat ("Atoms ({0}) are not in Atoms Dictionary", atomsName);
+		}
+		yield return coroutine;
+	}
+
+	IEnumerator MDVerlet(string atomsName, int steps, int updateAfterSteps, bool suppress=false) {
+		Atoms atoms;
+		Coroutine coroutine = null;
+		if (atomsDictionary.TryGetValue (atomsName, out atoms)) {
+
+			if (atoms == null) {
+				Debug.LogErrorFormat ("Could not initialise MD for ({0})- object is null", atomsName);
+			} else {
+				coroutine = StartCoroutine (atoms.graph.MDVerlet(steps, updateAfterSteps));
 			}
 		} else {
 			Debug.LogErrorFormat ("Atoms ({0}) are not in Atoms Dictionary", atomsName);

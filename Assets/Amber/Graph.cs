@@ -10,40 +10,41 @@ public class Graph : MonoBehaviour {
 	private Dictionary<long, AngleConnection> anglesDict;
 	private Dictionary<long, DihedralConnection> dihedralsDict;
 
-
+	//POSITIONS + FORCES
+	private double[,] positions;
+	private double[,] forces;
+/* 
 	//STRETCHES
 	private int numStretches;
-	private float[] stretchREqs;
-	private float[] stretchKEqs;
+	private double[] stretchREqs;
+	private double[] stretchKEqs;
 	private int[] stretchAtomNums;
 
 	//BENDS
 	private int numBends;
-	private float[] bendAEqs;
-	private float[] bendKEqs;
+	private double[] bendAEqs;
+	private double[] bendKEqs;
 	private int[] bendAtomNums;
 
 	//DIHEDRALS
 
 	private int numTorsions;
-	private float[] torsionVs;
-	private float[] torsionGammas;
+	private double[] torsionVs;
+	private double[] torsionGammas;
 	private int[] torsionAtomNums;
+	private double[] torsionPaths;
 
-	//NonBonding
+	//NONBONDING
 
 	private int numNonBonding;
-	private float[] vdwREqs;
-	private float[] vdwVs;
-	private float[] q0q1s;
+	private double[] vdwREqs;
+	private double[] vdwVs;
+	private double[] q0q1s;
 	private int[] nonBondingAtomNums;
 
-
-	private int numPrecomputedBondings;
-	private PrecomputedNonBonding[] precomputedNonBondings;
-	private float amberNonbondingCutoff;
-	private float amberVCutoff;
-	private float amberCCutoff;
+	private double amberNonbondingCutoff;
+	private double amberVCutoff;
+	private double amberCCutoff;*/
 
 	private int[,] distanceMatrix;
 
@@ -65,13 +66,15 @@ public class Graph : MonoBehaviour {
 	public BondTypes bondTypes;
 
 
-	public float amberEnergy;
-	public float allStretchesEnergy;
-	public float allBendsEnergy;
-	public float allTorsionsEnergy;
-	public float allVdwsEnergy;
-	public float allCoulombicEnergy;
-	public float amberGradient;
+	public double amberEnergy;
+	public double allStretchesEnergy;
+	public double allBendsEnergy;
+	public double allTorsionsEnergy;
+	public double allVdwsEnergy;
+	public double allCoulombicEnergy;
+	public double amberGradient;
+	public double kineticEnergy;
+	public double totalEnergy;
 
 
 	private bool _showLines;
@@ -124,12 +127,18 @@ public class Graph : MonoBehaviour {
 	}
 
 	public Connection GetConnection(int a0, int a1) {
-		return connectionsDict[GetConnectionKey(a0, a1)];
+		Connection connection;
+		return connectionsDict.TryGetValue( GetConnectionKey(a0, a1), out connection) ? connection : null;
 	}
 
 	long GetConnectionKey(int a0, int a1) {
 		long key = (a0 > a1) ? a0 * maxAtoms + a1 : a1 * maxAtoms + a0;
 		return key;
+	}
+
+	public AngleConnection GetAngleConnection(int a0, int a1, int a2) {
+		AngleConnection angleConnection;
+		return anglesDict.TryGetValue( GetAngleConnectionKey(a0, a1, a2), out angleConnection) ? angleConnection : null;
 	}
 
 	long GetAngleConnectionKey(int a0, int a1, int a2) {
@@ -308,6 +317,7 @@ public class Graph : MonoBehaviour {
 
 	public IEnumerator InitialiseParameters(bool suppressStretches=false, bool suppressBends=false, bool suppressTorsions=true, bool suppressNonBonding=false) {
 
+		InitialiseMasses();
 		InitialiseStretches(suppressStretches);
 		InitialiseBends(suppressBends);
 		InitialiseTorsions(suppressTorsions);
@@ -316,16 +326,24 @@ public class Graph : MonoBehaviour {
 		yield return null;
 	}
 
+	public void InitialiseMasses() {
+
+		int status = 0;
+		Fortran.set_masses(atoms.masses, ref status);
+		Fortran.CheckStatus(status);
+
+	}
+
 	public void InitialiseStretches(bool suppress=false) {
 
 		Connection connection;
 		Stretch stretch;
 		Connection[] connections = connectionsDict.Values.ToArray();
-		numStretches = connections.Length;
+		int numStretches = connections.Length;
 
-		stretchAtomNums = new int[numStretches * 2];
-		stretchREqs = new float[numStretches];
-		stretchKEqs = new float[numStretches];
+		int[] stretchAtomNums = new int[numStretches * 2];
+		double[] stretchREqs = new double[numStretches];
+		double[] stretchKEqs = new double[numStretches];
 
 		for (int i = 0; i < numStretches; i++) {
 			connection = connections[i];
@@ -342,6 +360,8 @@ public class Graph : MonoBehaviour {
 			stretchAtomNums[i * 2] = connection.atom0.index;
 			stretchAtomNums[i * 2 + 1] = connection.atom1.index;
 		}
+
+		Fortran.set_stretches(ref numStretches, stretchAtomNums, stretchREqs, stretchKEqs);
 	}
 
 	public void InitialiseBends(bool suppress=false) {
@@ -349,11 +369,11 @@ public class Graph : MonoBehaviour {
 		AngleConnection angle;
 		Bend bend;
 		AngleConnection[] connections = anglesDict.Values.ToArray();
-		numBends = connections.Length;
+		int numBends = connections.Length;
 
-		bendAtomNums = new int[numBends * 3];
-		bendAEqs = new float[numBends];
-		bendKEqs = new float[numBends];
+		int[] bendAtomNums = new int[numBends * 3];
+		double[] bendAEqs = new double[numBends];
+		double[] bendKEqs = new double[numBends];
 
 		for (int i = 0; i < numBends; i++) {
 			angle = connections[i];
@@ -365,12 +385,14 @@ public class Graph : MonoBehaviour {
 				continue;
 			}
 
-			bendAEqs[i] = bend.req;
+			bendAEqs[i] = Mathf.Deg2Rad * bend.req;
 			bendKEqs[i] = bend.keq;
 			bendAtomNums[i * 3] = angle.atom0.index;
 			bendAtomNums[i * 3 + 1] = angle.atom1.index;
 			bendAtomNums[i * 3 + 2] = angle.atom2.index;
 		}
+
+		Fortran.set_bends(ref numBends,	bendAtomNums, bendAEqs, bendKEqs);
 	}
 
 	public void InitialiseTorsions(bool suppress=true) {
@@ -380,9 +402,11 @@ public class Graph : MonoBehaviour {
 		DihedralConnection[] dihedrals = dihedralsDict.Values.ToArray();
 
 		List<int> torsionAtomNumList = new List<int>();
-		List<float> torsionVList = new List<float>();
-		List<float> torsionGammaList = new List<float>();
-		numTorsions = 0;
+		List<double> torsionVList = new List<double>();
+		List<double> torsionGammaList = new List<double>();
+		List<double> torsionPathList = new List<double>();
+		int numTorsions = 0;
+		double npaths;
 
 		for (int i = 0; i < dihedrals.Length; i++) {
 			dihedral = dihedrals[i];
@@ -398,22 +422,51 @@ public class Graph : MonoBehaviour {
 			torsionVList.Add(torsion.v1);
 			torsionVList.Add(torsion.v2);
 			torsionVList.Add(torsion.v3);
-			torsionGammaList.Add(torsion.gamma0);
-			torsionGammaList.Add(torsion.gamma1);
-			torsionGammaList.Add(torsion.gamma2);
-			torsionGammaList.Add(torsion.gamma3);
-			
+			torsionGammaList.Add(Mathf.Deg2Rad * torsion.gamma0);
+			torsionGammaList.Add(Mathf.Deg2Rad * torsion.gamma1);
+			torsionGammaList.Add(Mathf.Deg2Rad * torsion.gamma2);
+			torsionGammaList.Add(Mathf.Deg2Rad * torsion.gamma3);
+
+			if (torsion.npaths > 0.0){
+				torsionPathList.Add(torsion.npaths);
+			} else {
+				//Determine number of paths from connectivity
+				npaths = (double)
+					(neighbourCount[dihedral.atom1.index] - 1) * 
+					(neighbourCount[dihedral.atom2.index] - 1)
+				;
+				if (npaths > 0.0) {
+					torsionPathList.Add(torsion.npaths);
+				} else {
+					throw new System.Exception(string.Format(
+						"Error defining torsion: Atom {0} has {1} neighbours. Atom {2} has {3} neighbours",
+						dihedral.atom1.index,
+						neighbourCount[dihedral.atom1.index],
+						dihedral.atom2.index,
+						neighbourCount[dihedral.atom2.index]
+						)
+					);
+				}
+			}
 			torsionAtomNumList.Add(dihedral.atom0.index);
 			torsionAtomNumList.Add(dihedral.atom1.index);
 			torsionAtomNumList.Add(dihedral.atom2.index);
 			torsionAtomNumList.Add(dihedral.atom3.index);
 
+
 			numTorsions++;
 		}
 
-		torsionAtomNums = torsionAtomNumList.ToArray();
-		torsionVs = torsionVList.ToArray();
-		torsionGammas = torsionGammaList.ToArray();
+		//TEMP
+		numTorsions = 0;
+
+		Fortran.set_torsions (
+			ref numTorsions, 
+			torsionAtomNumList.ToArray(),
+			torsionVList.ToArray(),
+			torsionGammaList.ToArray(),
+			torsionPathList.ToArray()
+		);
 	}
 
 	public void InitialiseNonBonding(bool suppress=false) {
@@ -421,10 +474,9 @@ public class Graph : MonoBehaviour {
 		int a0;
 		int a1;
 		int bondDistance;
-		numPrecomputedBondings = 0;
 
-		amberVCutoff = parameters.nonbonding.vCutoff == 0f ? atoms.globalSettings.maxNonBondingCutoff : parameters.nonbonding.vCutoff;
-		amberCCutoff = parameters.nonbonding.cCutoff == 0f ? atoms.globalSettings.maxNonBondingCutoff : parameters.nonbonding.cCutoff;
+		double amberVCutoff = parameters.nonbonding.vCutoff == 0f ? atoms.globalSettings.maxNonBondingCutoff : parameters.nonbonding.vCutoff;
+		double amberCCutoff = parameters.nonbonding.cCutoff == 0f ? atoms.globalSettings.maxNonBondingCutoff : parameters.nonbonding.cCutoff;
 
 		float vScale;
 		float cScale;
@@ -442,13 +494,13 @@ public class Graph : MonoBehaviour {
 		Atom atom0;
 		Atom atom1;
 
-		numNonBonding = size * (size - 1) / 2;
+		int numNonBonding = size * (size - 1) / 2;
 		int nonBondingIndex = 0;
 
-		q0q1s = new float[numNonBonding];
-		vdwREqs = new float[numNonBonding];
-		vdwVs = new float[numNonBonding];
-		nonBondingAtomNums = new int[numNonBonding * 2];
+		double[] q0q1s = new double[numNonBonding];
+		double[] vdwREqs = new double[numNonBonding];
+		double[] vdwVs = new double[numNonBonding];
+		int[] nonBondingAtomNums = new int[numNonBonding * 2];
 
 		for (a0 = 0; a0 < size - 1; a0++) {
 			atom0 = atoms[a0];
@@ -490,274 +542,319 @@ public class Graph : MonoBehaviour {
 			}
 
 		}
+
+		Fortran.set_non_bonding(
+			ref numNonBonding,
+			nonBondingAtomNums,
+			vdwVs,
+			vdwREqs,
+			ref amberVCutoff,
+			q0q1s,
+			ref parameters.dielectricConstant,
+			ref amberCCutoff
+		);
 	}
 
 
-	public void GetStretchesEGH() {
-		float[] energies = new float[3];
-		Atom atom0;
-		Atom atom1;
-		Vector3 v10;
-		float r10;
-		Vector3 force;
-		allStretchesEnergy = 0f;
-		for (int i = 0; i < numStretches; i++) {
+	//public void GetStretchesEGH() {
+	//	float[] energies = new float[3];
+	//	int a0;
+	//	int a1;
+//
+	//	float[] v01 = new float[3];
+	//	float r01;
+	//	float[] force = new float[3];
+	//	int c = 0;
+//
+	//	allStretchesEnergy = 0f;
+	//	for (int i = 0; i < numStretches; i++) {
+	//		a0 = stretchAtomNums[i * 2];
+	//		a1 = stretchAtomNums[i * 2 + 1];
+	//		
+	//		Mathematics.VectorFromArray(positions, a0, a1, v01);
+	//		r01 = Mathematics.Magnitude3(v01);
+//
+	//		Mathematics.EStretch(
+	//			r01,
+	//			stretchKEqs[i],
+	//			stretchREqs[i],
+	//			energies
+	//		);
+//
+	//		allStretchesEnergy += energies[0];
+	//		_amberGradient += Mathf.Abs(energies[1]);
+//
+	//		Mathematics.Multiply3(v01, energies[1] / r01, force);
+//
+	//		for (c = 0; c < 3; c++){
+	//			forces[a0,c] += force[c];
+	//			forces[a1,c] -= force[c];
+	//		}
+	//		
+	//	}
+	//}
 
-			atom0 = atoms[stretchAtomNums[i * 2]];
-			atom1 = atoms[stretchAtomNums[i * 2 + 1]];
-			v10 = atom1.p - atom0.p;
-			r10 = v10.magnitude;
+	//public void GetBendsEGH() {
+	//	float[] energies = new float[3];
+	//	int a0;
+	//	int a1;
+	//	int a2;
+//
+	//	allBendsEnergy = 0f;
+	//	int bendAtomNum = 0;
+	//	for (int bendNum = 0; bendNum < numBends; bendNum++) {
+//
+	//		a0 = bendAtomNums[bendAtomNum++];
+	//		a1 = bendAtomNums[bendAtomNum++];
+	//		a2 = bendAtomNums[bendAtomNum++];
+//
+	//		Mathematics.GetBendForce(a0, a1, a2, positions, energies, forces, bendAEqs[bendNum], bendKEqs[bendNum]);
+//
+	//		allBendsEnergy += energies[0];
+	//		_amberGradient += Mathf.Abs(energies[1]);
+//
+	//	}
+	//}
+	//public void GetTorsionEGH() {
+	//	//Reference:
+	//	//http://xray.bmc.uu.se/~aqwww/q_legacy/documents/qman5.pdf
+//
+	//	float t = Time.realtimeSinceStartup;
+//
+	//	int a0;
+	//	int a1;
+	//	int a2;
+	//	int a3;
+	//	int c;
+//
+	//	float[] p3 = new float[3];
+//
+	//	float[] energies = new float[3];
+//
+	//	float[] v10 = new float[3];
+	//	float[] v12 = new float[3];
+	//	float[] v23 = new float[3];
+//
+	//	float[] v10_ = new float[3];
+	//	float[] v12_ = new float[3];
+	//	float[] v23_ = new float[3];
+//
+	//	float[] w1_ = new float[3];
+	//	float[] w2_ = new float[3];
+	//	float[] c12 = new float[3];
+	//	float[] vc3 = new float[3];
+//
+	//	float dihedral;
+	//	float r10;
+	//	float r23;
+	//	float rc3;
+	//	float da_dr10;
+	//	float da_dr23;
+	//	float s1;
+	//	float s2;
+	//	float tempDot = 0f;
+//
+	//	float[] force0 = new float[3];
+	//	float[] force2 = new float[3];
+	//	float[] force3 = new float[3];
+//
+	//	float[] torque3 = new float[3];
+	//	float[] cross = new float[3];
+//
+	//	allTorsionsEnergy = 0f;
+	//	int torsionIndex;
+	//	for (int i = 0; i < numTorsions; i++) {
+	//		torsionIndex = i * 4;
+	//		
+	//		a0 = torsionAtomNums[torsionIndex];
+	//		a1 = torsionAtomNums[torsionIndex + 1];
+	//		a2 = torsionAtomNums[torsionIndex + 2];
+	//		a3 = torsionAtomNums[torsionIndex + 3];
+//
+	//		Mathematics.VectorFromArray(positions, a1, a0, v10);
+	//		Mathematics.VectorFromArray(positions, a1, a2, v12);
+	//		Mathematics.VectorFromArray(positions, a2, a3, v23);
+//
+	//		Mathematics.Normalise3(v12, v12_);
+//
+	//		r10 = Mathematics.Magnitude3(v10);
+	//		r23 = Mathematics.Magnitude3(v23);
+//
+	//		Mathematics.Divide3(v10, r10, v10_);
+	//		Mathematics.Divide3(v23, r23, v23_);
+//
+	//		Mathematics.Cross3(v10_, v12_, w1_);
+	//		Mathematics.Cross3(v23_, v12_, w2_);
+//
+	//		dihedral = Mathematics.SignedAngleRad3(w1_, w2_, v12_);
+//
+	//		s1 = Mathf.Sin(Mathematics.UnsignedAngleRad3(v10_, v12_, tempDot));
+	//		s2 = Mathf.Sin(Mathematics.UnsignedAngleRad3(v12_, v23_, tempDot));
+//
+	//		da_dr10 = 1f / (r10 * s1);
+	//		da_dr23 = 1f / (r23 * s2);
+//
+	//		Mathematics.ETorsion(
+	//			dihedral,
+	//			torsionVs[torsionIndex],
+	//			torsionVs[torsionIndex + 1],
+	//			torsionVs[torsionIndex + 2],
+	//			torsionVs[torsionIndex + 3],
+	//			torsionGammas[torsionIndex],
+	//			torsionGammas[torsionIndex + 1],
+	//			torsionGammas[torsionIndex + 2],
+	//			torsionGammas[torsionIndex + 3],
+	//			energies
+	//		);
+//
+	//		allTorsionsEnergy += energies[0];
+	//		_amberGradient += Mathf.Abs(energies[1]);
+//
+	//		da_dr10 *= energies[1];
+	//		da_dr23 *= energies[1];
+//
+	//		force0[0] = - w1_[0] * da_dr10;
+	//		force0[1] = - w1_[1] * da_dr10;
+	//		force0[2] = - w1_[2] * da_dr10;
+//
+	//		force3[0] = w2_[0] * da_dr23;
+	//		force3[1] = w2_[0] * da_dr23;
+	//		force3[2] = w2_[0] * da_dr23;
+//
+	//		//Position of centre of a1 and a2
+	//		Mathematics.AverageFromArray(positions, a1, a2, c12);
+//
+	//		//Vector and magnitude from centre to a3
+	//		Mathematics.ItemFromArray(positions, a3, p3);
+	//		Mathematics.Subtract3(c12, p3, vc3);
+	//		rc3 = Mathematics.Magnitude3(vc3);
+//
+	//		//Determine torque on a2
+	//		Mathematics.Cross3(vc3, force3, cross);
+	//		Mathematics.Add3(torque3, cross);
+//
+	//		Mathematics.Cross3(v23, force3, cross);
+	//		Mathematics.Multiply3(cross, 0.5f);
+	//		Mathematics.Add3(torque3, cross);
+//
+	//		Mathematics.Cross3(v12, force0, cross);
+	//		Mathematics.Multiply3(cross, -0.5f);
+	//		Mathematics.Add3(torque3, cross);
+//
+	//		//Get force on atom 2
+	//		Mathematics.Divide3(torque3, - rc3 * rc3);
+	//		Mathematics.Cross3(torque3, vc3, force2);
+//
+	//		for (c = 0; c < 3; c++) {
+	//			forces[a0, c] += force0[c];
+	//			forces[a1, c] -= force0[c] + force2[c] + force3[c];
+	//			forces[a2, c] += force2[c];
+	//			forces[a3, c] += force3[c];
+	//		}
+	//	}
+//
+	//}
 
-			Mathematics.EStretch(
-				r10,
-				stretchKEqs[i],
-				stretchREqs[i],
-				energies
-			);
-
-			allStretchesEnergy += energies[0];
-			amberGradient += Mathf.Abs(energies[1]);
-
-			force = v10 * energies[1] / r10;
-			atom0.force += force;
-			atom1.force -= force;
-		}
-	}
-
-	public void GetBendsEGH() {
-		float[] energies = new float[3];
-		Atom atom0;
-		Atom atom1;
-		Atom atom2;
-
-		Vector3 perp;
-		Vector3 v10;
-		Vector3 v12;
-
-		float r10;
-		float r12;
-
-		Vector3 force10;
-		Vector3 force12;
-
-		allBendsEnergy = 0f;
-		for (int i = 0; i < numBends; i++) {
-
-			atom0 = atoms[bendAtomNums[i * 3]];
-			atom1 = atoms[bendAtomNums[i * 3 + 1]];
-			atom2 = atoms[bendAtomNums[i * 3 + 2]];
-			v10 = (atom1.p - atom0.p);
-			v12 = (atom1.p - atom2.p);
-			r10 = v10.magnitude;
-			r12 = v12.magnitude;
-
-			Mathematics.EAngle(
-				Mathf.Deg2Rad * (Vector3.Angle(v10, v12) - bendAEqs[i]),
-				bendKEqs[i],
-				energies
-			);
-
-			allBendsEnergy += energies[0];
-			amberGradient += Mathf.Abs(energies[1]);
-
-			perp = Vector3.Cross(v10, v12);
-
-			force10 = Vector3.Cross(v10, perp) * energies[1] / r10;
-			force12 = - Vector3.Cross(v12, perp) * energies[1] / r12;
-
-			atom0.force += force10;
-			atom1.force -= force10 + force12;
-			atom2.force += force12;
-
-		}
-	}
-
-	public void GetTorsionEGH() {
-		float[] energies = new float[3];
-		Atom atom0;
-		Atom atom1;
-		Atom atom2;
-		Atom atom3;
-
-		Vector3 v10;
-		Vector3 v12;
-		Vector3 v23;
-		Vector3 w1;
-		Vector3 w2;
-		Vector3 c;
-		Vector3 vc2;
-
-		float dihedral;
-		float r10;
-		float r23;
-		float rc2;
-		float da_dr10;
-		float da_dr23;
-		float s1;
-		float s2;
-
-		Vector3 force0;
-		Vector3 force1;
-		Vector3 force2;
-		Vector3 force3;
-
-		allTorsionsEnergy = 0f;
-		int torsionIndex;
-		for (int i = 0; i < numTorsions; i++) {
-			torsionIndex = i * 4;
-			//if (i!=55)
-			//	continue;
-			atom0 = atoms[torsionAtomNums[i * 4]];
-			atom1 = atoms[torsionAtomNums[i * 4 + 1]];
-			atom2 = atoms[torsionAtomNums[i * 4 + 2]];
-			atom3 = atoms[torsionAtomNums[i * 4 + 3]];
-
-			v10 = (atom0.p - atom1.p);
-			v12 = (atom2.p - atom1.p).normalized;
-			v23 = (atom3.p - atom2.p);
-
-			r10 = v10.magnitude;
-			r23 = v23.magnitude;
-
-			w1 = Vector3.Cross(v10 / r10, v12);
-			w2 = Vector3.Cross(v23 / r23, v12);
-
-			//dihedral = Vector3.Angle(w1, w2);
-			//if (Vector3.Cross(w1, w2).y > 0) dihedral = -dihedral;
-
-			dihedral = Mathf.Atan2(Vector3.Dot(v12, Vector3.Cross(w1, w2)), Vector3.Dot(w1, w2));
-
-			s1 = Mathf.Sin(Mathf.Deg2Rad * Vector3.Angle(v10, v12));
-			s2 = Mathf.Sin(Mathf.Deg2Rad * Vector3.Angle(- v12, v23));
-			da_dr10 = 1f / (r10 * s1);
-			da_dr23 = 1f / (r23 * s2);
-
-			Mathematics.ETorsion(
-				dihedral,
-				torsionVs[torsionIndex],
-				torsionVs[torsionIndex + 1],
-				torsionVs[torsionIndex + 2],
-				torsionVs[torsionIndex + 3],
-				torsionGammas[torsionIndex],
-				torsionGammas[torsionIndex + 1],
-				torsionGammas[torsionIndex + 2],
-				torsionGammas[torsionIndex + 3],
-				energies
-			);
-
-			allTorsionsEnergy += energies[0];
-			amberGradient += Mathf.Abs(energies[1]);
-
-			force0 = - w1 * da_dr10 * energies[1];
-			force3 = w2 * da_dr23 * energies[1];
-
-			c = (atom1.p + atom2.p) * 0.5f;
-			vc2 = c - atom3.p;
-			rc2 = vc2.magnitude;
-
-			force2 = Vector3.Cross( - ((Vector3.Cross(vc2, force3) + 0.5f * Vector3.Cross(v23, force3) - 0.5f * Vector3.Cross(v12, force0)) / (rc2 * rc2)), vc2);
-			force1 = - force0 - force2 - force3;
-
-			atom0.force += force0;
-			atom1.force += force1;
-			atom2.force += force2;
-			atom3.force += force3;
-
-			//Debug.LogFormat("{0} {1} {2} {3} {4}", i, atom0.index, atom1.index, atom2.index,atom3.index);
-			//if (i==55){
-			/* if (false){
-				Debug.LogFormat("F: {0}, E: {1}, G: {2}, D: {3}", force0, energies[0], energies[1], dihedral);
-
-				Debug.LogFormat(
-					"{0} {1} {2} {3}   {4} {5} {6} {7}   {8} {9} {10} {11}",
-					atom0.amberName,
-					atom1.amberName,
-					atom2.amberName,
-					atom3.amberName,
-					torsionVs[torsionIndex],
-					torsionVs[torsionIndex + 1],
-					torsionVs[torsionIndex + 2],
-					torsionVs[torsionIndex + 3],
-					torsionGammas[torsionIndex],
-					torsionGammas[torsionIndex + 1],
-					torsionGammas[torsionIndex + 2],
-					torsionGammas[torsionIndex + 3]
-				); 
-
-				Debug.DrawLine(atom0.p, atom0.p + force0, Color.red);
-				Debug.DrawLine(atom3.p, atom3.p + force3, Color.red);
-
-				Debug.DrawLine(atom1.p, atom1.p + w1, Color.white);
-				Debug.DrawLine(atom2.p, atom2.p + w2, Color.white);
-
-				Debug.DrawLine(atom1.p, atom1.p + v10, Color.blue);
-				Debug.DrawLine(atom1.p, atom1.p + v12, Color.blue);
-				Debug.DrawLine(atom2.p, atom2.p + v23, Color.blue);
-				//Debug.DrawLine(atom1.p, atom1.p + force1, Color.green);
-				//Debug.DrawLine(atom2.p, atom2.p + force2, Color.blue);
-			}
-			*/
-		}
-	}
-
-	public void GetNonBondingEGH() {
-		float[] vdwEnergies = new float[3];
-		float[] coulombicEnergies = new float[3];
-		Atom atom0;
-		Atom atom1;
-		Vector3 v10;
-		float r10;
-		Vector3 force;
-		
-
-		float dielectricConstant = parameters.dielectricConstant;
-
-		allCoulombicEnergy = 0f;
-		allVdwsEnergy = 0f;
-		for (int i = 0; i < numNonBonding; i++) {
-
-			atom0 = atoms[nonBondingAtomNums[i * 2]];
-			atom1 = atoms[nonBondingAtomNums[i * 2 + 1]];
-			v10 = atom1.p - atom0.p;
-			r10 = v10.magnitude;
-
-			Mathematics.EElectrostaticR1(
-				r10,
-				q0q1s[i],
-				dielectricConstant,
-				coulombicEnergies
-			);
-
-			Mathematics.EVdWAmber(
-				r10,
-				vdwVs[i],
-				vdwREqs[i],
-				vdwEnergies
-			);
-
-
-			allCoulombicEnergy += coulombicEnergies[0];
-			allVdwsEnergy += vdwEnergies[0];
-
-			amberGradient += Mathf.Abs(coulombicEnergies[1]) + Mathf.Abs(vdwEnergies[1]);
-
-			force = v10 * (coulombicEnergies[1] + vdwEnergies[1]) / r10;
-			atom0.force += force;
-			atom1.force -= force;
-		}
-	}
+	//public void GetNonBondingEGHOld() {
+	//	float[] vdwEnergies = new float[3];
+	//	float[] coulombicEnergies = new float[3];
+//
+	//	int a0;
+	//	int a1;
+//
+	//	float[] v10 = new float[3];
+	//	float r10;
+	//	int c;
+//
+	//	float dielectricConstant = parameters.dielectricConstant;
+//
+	//	allCoulombicEnergy = 0f;
+	//	allVdwsEnergy = 0f;
+	//	for (int i = 0; i < numNonBonding; i++) {
+//
+	//		a0 = nonBondingAtomNums[i * 2];
+	//		a1 = nonBondingAtomNums[i * 2 + 1];
+//
+	//		Mathematics.VectorFromArray(positions, a0, a1, v10);
+	//		r10 = Mathematics.Magnitude3(v10);
+	//		
+	//		if (r10 < amberCCutoff){
+	//			Mathematics.EElectrostaticR1(
+	//				r10,
+	//				q0q1s[i],
+	//				dielectricConstant,
+	//				coulombicEnergies
+	//			);
+	//		}
+//
+	//		if (r10 < amberVCutoff) {
+	//			Mathematics.EVdWAmber(
+	//				r10,
+	//				vdwVs[i],
+	//				vdwREqs[i],
+	//				vdwEnergies
+	//			);
+	//		}
+	//		
+	//		allCoulombicEnergy += coulombicEnergies[0];
+	//		allVdwsEnergy += vdwEnergies[0];
+//
+	//		_amberGradient += Mathf.Abs(coulombicEnergies[1]) + Mathf.Abs(vdwEnergies[1]);
+//
+	//		for (c = 0; c < 3; c++){
+	//			forces[a0,c] += v10[c] * (coulombicEnergies[1] + vdwEnergies[1]) / r10;
+	//			forces[a1,c] -= v10[c] * (coulombicEnergies[1] + vdwEnergies[1]) / r10;
+	//		}
+	//	}
+	//}
 
 	public IEnumerator GetAmberEGH(bool suppressStretches=false, bool suppressBends=false, bool suppressTorsions=true, bool suppressNonBonding=false) {
 		_busy++;
 
 		amberGradient = 0f;
-		GetStretchesEGH();
-		GetBendsEGH();
-		GetTorsionEGH();
-		GetNonBondingEGH();
+		int c;
+		for (int atomNum = 0; atomNum < atoms.size; atomNum++) {
+			for (c=0; c<3; c++){
+				positions[atomNum,c] = atoms[atomNum].p[c];
+			}
+		}
+		int numAtoms = size;
+		Fortran.set_geometry(positions, ref numAtoms);
+
+		int status = 0;
+
+		double[] stretchesEnergy = new double[2];
+		double[] bendsEnergy = new double[2];
+		double[] torsionsEnergy = new double[2];
+		double[] vdwsEnergy = new double[2];
+		double[] coulombicEnergy = new double[2];
+		
+		Fortran.e_amber(forces, stretchesEnergy, bendsEnergy, torsionsEnergy, vdwsEnergy,
+        coulombicEnergy, ref amberGradient, ref status);
+		Fortran.CheckStatus(status);
+		
+		//GetStretchesEGH();
+		//yield return null;
+		//GetBendsEGH();
+		//yield return null;
+		//GetTorsionEGH();
+		///yield return null;
+		//GetNonBondingEGH();
+		//yield return null;
+
+		allStretchesEnergy = stretchesEnergy[0];
+		allBendsEnergy = bendsEnergy[0];
+		allTorsionsEnergy = torsionsEnergy[0];
+		allVdwsEnergy = vdwsEnergy[0];
+		allCoulombicEnergy = coulombicEnergy[0];
 
 		amberEnergy = allStretchesEnergy + allBendsEnergy + allTorsionsEnergy + allVdwsEnergy + allCoulombicEnergy;
-
+		totalEnergy = amberEnergy + kineticEnergy;
+		for (int atomNum = 0; atomNum < atoms.size; atomNum++) {
+			for (c=0; c<3; c++){
+				atoms[atomNum].force[c] = (float)forces[atomNum, c];
+			}
+		}
 		_busy--;
 		yield return null;
 	}
@@ -769,24 +866,22 @@ public class Graph : MonoBehaviour {
 		iEnumerator = InitialiseParameters();
 			while (iEnumerator.MoveNext()) {}
 
-		foreach (Atom atom in atoms)
+		foreach (Atom atom in atoms) {
+			atom.mdTimeStep = atoms.globalSettings.mdTimeStep;
+			atom.mdDampingFactor = atoms.globalSettings.mdDampingFactor;
+			atom.force = new Vector3();
 			atom.mobile = true;
+		}
 
 		yield return null;
 
 		//Run MD
-		float mdDampingFactor;
 		for (int stepNum = 0; stepNum < steps; stepNum++) {
-
-			mdDampingFactor = atoms.globalSettings.mdDampingFactor;
-			foreach (Atom atom in atoms) {
-				atom.force = Vector3.zero;
-				atom.velocity *= mdDampingFactor;
-			}
 
 			iEnumerator = GetAmberEGH();
-			while (iEnumerator.MoveNext()) {}
+			while (iEnumerator.MoveNext()) {yield return new WaitForSeconds(0.1f);}
 
+			
 			yield return null;
 		}
 		yield return null;
@@ -798,215 +893,73 @@ public class Graph : MonoBehaviour {
 		yield return null;
 	}
 
-	public IEnumerator MD(int steps, bool suppress=false) {
+	public IEnumerator MDVerlet(int steps, int updateAfterSteps=5) {
 		_busy++;
 
-		//Initialise Non-bonding
-		List<PrecomputedNonBonding> precomputedNonBondingsList = new List<PrecomputedNonBonding>();
+		int status = 0;
+		int c = 0;
+		int numAtoms = size;
+		positions = new double[numAtoms, 3];
+		forces = new double[numAtoms, 3];
 
-		int a0;
-		int a1;
-		int bondDistance;
-		numPrecomputedBondings = 0;
-
-		amberNonbondingCutoff = parameters.nonbonding.vCutoff == 0f ? atoms.globalSettings.maxNonBondingCutoff : parameters.nonbonding.vCutoff;
-		float vScale1 = parameters.nonbonding.vScales[1];
-		float vScale2 = parameters.nonbonding.vScales[2];
-		float vScale3 = parameters.nonbonding.vScales[3];
-		float vScale;
-		float cScale1 = parameters.nonbonding.cScales[1];
-		float cScale2 = parameters.nonbonding.cScales[2];
-		float cScale3 = parameters.nonbonding.cScales[3];
-		float cScale;
-		float dielectricConstant = parameters.dielectricConstant;
-
-		Dictionary<string, VdW> vdwDict = new Dictionary<string, VdW>();
-
-		foreach (VdW vdw in parameters.vdws) {
-			vdwDict.Add(vdw.t, vdw);
-		}
-
-		VdW vdw0;
-		VdW vdw1;
-		Atom atom0;
-		Atom atom1;
-
-		for (a0 = 0; a0 < size - 1; a0++) {
-			atom0 = atoms[a0];
-
-			if (!vdwDict.TryGetValue(atom0.amberName, out vdw0)) {
-				if (!suppress)
-					throw new NoParameterException(typeof(VdW), atom0);
-				continue;
-			}
-
-			for (a1 = a0 + 1; a1 < size; a1++) {
-				atom1 = atoms[a1];
-
-				bondDistance = distanceMatrix[a0, a1];
-
-				if (bondDistance == 1) {
-					vScale = vScale1;
-					cScale = cScale1;
-				} else if (bondDistance == 2) {
-					vScale = vScale2;
-					cScale = cScale2;
-				} else if (bondDistance == 3) {
-					vScale = vScale3;
-					cScale = cScale3;
-				} else {
-					vScale = 1f;
-					cScale = 1f;
-				}
-
-				if (!vdwDict.TryGetValue(atoms[a1].amberName, out vdw1)) {
-					if (!suppress)
-					throw new NoParameterException(typeof(VdW), atom1);
-					continue;
-				}
-
-				if (vScale == 0f)
-					continue;
-
-				PrecomputedNonBonding precomputedNonBonding = new PrecomputedNonBonding(vdw0, vdw1, atom0, atom1, vScale, cScale, dielectricConstant);
-				//If we're ignoring errors, don't add this param
-
-				precomputedNonBondingsList.Add(precomputedNonBonding);
-				numPrecomputedBondings++;
+		for (int atomNum = 0; atomNum < atoms.size; atomNum++) {
+			for (c=0; c<3; c++){
+				positions[atomNum,c] = atoms[atomNum].p[c];
 			}
 		}
+		Fortran.set_geometry(positions, ref numAtoms);
 
-		precomputedNonBondings = precomputedNonBondingsList.ToArray();
-
+		IEnumerator iEnumerator;
+		iEnumerator = InitialiseParameters();
+			while (iEnumerator.MoveNext()) {}
 		yield return null;
 
-		//Mobilise atoms
-		foreach (Atom atom in atoms)
-			atom.mobile = true;
 
-		yield return null;
+
+		double[] stretchesEnergy = new double[2];
+		double[] bendsEnergy = new double[2];
+		double[] torsionsEnergy = new double[2];
+		double[] vdwsEnergy = new double[2];
+		double[] coulombicEnergy = new double[2];
+
+		double mdTimeStep = atoms.globalSettings.mdTimeStep;
+		double mdDampingFactor = atoms.globalSettings.mdDampingFactor;
 
 		//Run MD
-		for (int stepNum = 0; stepNum < steps; stepNum++) {
-			//IEnumerator iEnumerator = GetAmberEnergy(0,true);
-			//while (iEnumerator.MoveNext()) {}
+		int stepNum = 0;
+		while (stepNum < steps) {
 
-			Coroutine coroutine = StartCoroutine( MDStep(suppress));
+			Fortran.set_geometry(positions, ref numAtoms);
+			Fortran.md_verlet(positions, ref updateAfterSteps, 
+				ref mdTimeStep, ref mdDampingFactor,
+				stretchesEnergy, bendsEnergy, torsionsEnergy, vdwsEnergy, coulombicEnergy,
+				ref kineticEnergy, ref amberGradient, ref status);
+			Fortran.CheckStatus(status);
 
-			Debug.Log(amberEnergy);
-			yield return null;
-			yield return coroutine;
-		}
-		yield return null;
+			allStretchesEnergy = stretchesEnergy[0];
+			allBendsEnergy = bendsEnergy[0];
+			allTorsionsEnergy = torsionsEnergy[0];
+			allVdwsEnergy = vdwsEnergy[0];
+			allCoulombicEnergy = coulombicEnergy[0];
 
-		foreach (Atom atom in atoms)
-			atom.mobile = false;
-		_busy--;
-	}
+			amberEnergy = allStretchesEnergy + allBendsEnergy + allTorsionsEnergy + allVdwsEnergy + allCoulombicEnergy;
+			totalEnergy = amberEnergy + kineticEnergy;
+			
+			stepNum += updateAfterSteps;
 
-	public IEnumerator MDStep(bool suppress=false) {
-		_busy++;
-
-		foreach (Atom atom in atoms)
-			atom.force = Vector3.zero;
-		
-		IEnumerator iEnumerator;
-
-		//Stretches
-		iEnumerator = GetStretchesForces(suppress);
-		while (iEnumerator.MoveNext()) {}
-
-		//Bends
-		iEnumerator = GetBendsForces(suppress);
-		while (iEnumerator.MoveNext()) {}
-
-		//Non bonding
-		iEnumerator = GetNonBondingForces(suppress);
-		while (iEnumerator.MoveNext()) {}
-
-		yield return null;
-
-		_busy--;
-	}
-
-	public IEnumerator GetStretchesForces(bool suppress=false) {
-		_busy++;
-
-		float dE_dr;
-		Vector3 connectionVector;
-
-		foreach (Connection connection in connectionsDict.Values) {
-			dE_dr = connection.EStretch(1, suppress);
-			connectionVector = (connection.atom1.p - connection.atom0.p).normalized;
-			connection.atom0.force += connectionVector * dE_dr;
-			connection.atom1.force -= connectionVector * dE_dr;
-
-		}
-
-		_busy--;
-		yield return null;
-	}
-
-	public IEnumerator GetBendsForces(bool suppress=false) {
-		_busy++;
-
-		float dE_da;
-		Vector3 connectionVector10;
-		Vector3 connectionVector12;
-		Vector3 perp;
-
-		foreach (AngleConnection angle in anglesDict.Values) {
-			dE_da = EAngle(angle, 1, suppress);
-
-			connectionVector10 = (angle.atom1.p - angle.atom0.p).normalized;
-			connectionVector12 = (angle.atom1.p - angle.atom2.p).normalized;
-			perp = Vector3.Cross(connectionVector10, connectionVector12);
-
-			angle.atom0.force += Vector3.Cross(connectionVector10, perp) * dE_da;
-			angle.atom2.force -= Vector3.Cross(connectionVector12, perp) * dE_da;
-
-		}
-
-		_busy--;
-		yield return null;
-	}
-
-	public IEnumerator GetNonBondingForces(bool suppress=false) {
-		_busy++;
-		Vector3 connectionVector;
-
-		int nonBondingIndex;
-		PrecomputedNonBonding precomputedNonBonding;
-		float[] vdwEnergies = new float[3];
-		float[] coulombEnergies  = new float[3];
-		float r;
-
-		allVdwsEnergy = 0f;
-		allCoulombicEnergy = 0f;
-
-		for (nonBondingIndex = 0; nonBondingIndex < numPrecomputedBondings; nonBondingIndex++) {
-			precomputedNonBonding = precomputedNonBondings[nonBondingIndex];
-			r = Vector3.Distance(precomputedNonBonding.atom0.p, precomputedNonBonding.atom1.p);
-			if (r > amberNonbondingCutoff) {
-				continue;
+			for (int atomNum = 0; atomNum < atoms.size; atomNum++) {
+				atoms[atomNum].transform.localPosition.Set(
+					(float)positions[atomNum, 0],
+					(float)positions[atomNum, 1],
+					(float)positions[atomNum, 2]
+				);
 			}
-
-			connectionVector = (precomputedNonBonding.atom1.p - precomputedNonBonding.atom0.p).normalized;
-			
-			precomputedNonBonding.GetEnergy(r, atoms.globalSettings.angstromToBohr, 1, vdwEnergies, coulombEnergies);
-
-			allVdwsEnergy += vdwEnergies[0];
-			allCoulombicEnergy += coulombEnergies[0];
-
-			precomputedNonBonding.atom0.force += connectionVector * (vdwEnergies[1] + coulombEnergies[1]);
-			precomputedNonBonding.atom1.force -= connectionVector * (vdwEnergies[1] + coulombEnergies[1]);
-			
+			yield return null;
 		}
 
 		_busy--;
 		yield return null;
 	}
-
 
 	public IEnumerator SolveGraph() {
 		_busy++;
@@ -1228,27 +1181,6 @@ public class Graph : MonoBehaviour {
 		return null;
 	}
 
-	public float EAngle(AngleConnection angleConnection, int order, bool suppress=false) {
-		Bend param = GetBendParameter (angleConnection);
-		if (param == null) {
-			if (!suppress)
-				Debug.LogError (string.Format ("No parameter for Angle: {0}-{1}-{2}", angleConnection.atom0.amberName, angleConnection.atom1.amberName, angleConnection.atom2.amberName));
-			return 0f;
-		}
-
-		float angle = Mathematics.GetAngleDeg(angleConnection.atom0.p, angleConnection.atom1.p, angleConnection.atom2.p);
-
-		if (order == 0) {
-			return param.keq * Mathf.Pow (Mathf.Deg2Rad * (angle - param.req), 2f);
-		} else if (order == 1) {
-			return 2f * param.keq * (Mathf.Deg2Rad * (angle - param.req));
-		} else if (order == 2) {
-			return 2f * param.keq;
-		} else {
-			return 0f;
-		}
-	}
-
 	public Stretch GetStretchParameter(Connection connection) {
 		foreach (Stretch param in parameters.stretches) {
 			if (connection.atom0.amberName == param.t0 && connection.atom1.amberName == param.t1)
@@ -1279,70 +1211,6 @@ public class Graph : MonoBehaviour {
 		types.Add(dihedralConnection.atom3.amberName);
 		
 		return parameters.improperTorsions.Where(p => (types.SequenceEqual(p.types, new WildCardEqualityComparer()) || types.SequenceEqual(p.reverseTypes, new WildCardEqualityComparer()))).OrderBy(p => p.wildcardCount).FirstOrDefault();
-	}
-
-	public float ETorsion(DihedralConnection dihedralConnection, int order, bool suppress=false) {
-		Torsion param = GetTorsionParameter (dihedralConnection);
-		if (param == null) {
-			if (!suppress)
-				Debug.LogError (string.Format ("No parameter for Torsion: {0}-{1}-{2}-{3}", dihedralConnection.atom0.amberName, dihedralConnection.atom1.amberName, dihedralConnection.atom2.amberName, dihedralConnection.atom3.amberName));
-			return 0f;
-		}
-
-		float dihedral = dihedralConnection.dihedral;
-
-		float e = 0f;
-		if (order == 0) {
-			if (param.v0 != 0)
-				e += 0.5f * param.v0 * (1f + Mathf.Cos (Mathf.Deg2Rad *  (dihedral - param.gamma0)));
-			if (param.v1 != 0)
-				e += 0.5f * param.v1 * (1f + Mathf.Cos (2f * Mathf.Deg2Rad *  (dihedral - param.gamma1)));
-			if (param.v2 != 0)
-				e += 0.5f * param.v2 * (1f + Mathf.Cos (3f * Mathf.Deg2Rad *  (dihedral - param.gamma2)));
-			if (param.v3 != 0)
-				e += 0.5f * param.v3 * (1f + Mathf.Cos (4f * Mathf.Deg2Rad *  (dihedral - param.gamma3)));
-		} else if (order == 1) {
-			if (param.v0 != 0)
-				e -= 0.5f * param.v0 * (Mathf.Sin (Mathf.Deg2Rad *  (dihedral - param.gamma0)));
-			if (param.v1 != 0)
-				e -= 0.5f * param.v1 * 2f * (Mathf.Sin (2f * Mathf.Deg2Rad *  (dihedral - param.gamma1)));
-			if (param.v2 != 0)
-				e -= 0.5f * param.v2 * 3f * (Mathf.Sin (3f * Mathf.Deg2Rad *  (dihedral - param.gamma2)));
-			if (param.v3 != 0)
-				e -= 0.5f * param.v3 * 4f * (Mathf.Sin (4f * Mathf.Deg2Rad *  (dihedral - param.gamma3)));
-		} else if (order == 2) {
-			if (param.v0 != 0)
-				e -= 0.5f * param.v0 * (Mathf.Cos (Mathf.Deg2Rad *  (dihedral - param.gamma0)));
-			if (param.v1 != 0)
-				e -= 0.5f * param.v1 * 4f * (Mathf.Cos (2f * Mathf.Deg2Rad *  (dihedral - param.gamma1)));
-			if (param.v2 != 0)
-				e -= 0.5f * param.v2 * 9f * (Mathf.Cos (3f * Mathf.Deg2Rad *  (dihedral - param.gamma2)));
-			if (param.v3 != 0)
-				e -= 0.5f * param.v3 * 16f * (Mathf.Cos (4f * Mathf.Deg2Rad *  (dihedral - param.gamma3)));
-		}
-		return e / param.npaths;
-	}
-
-	public float EImproperTorsion(DihedralConnection dihedralConnection, int order, bool suppress=false) {
-		ImproperTorsion param = GetImproperTorsionParameter (dihedralConnection);
-		if (param == null) {
-			if (!suppress)
-				Debug.LogError (string.Format ("No parameter for Improper Torsion: {0}-{1}-{2}-{3}", dihedralConnection.atom0.amberName, dihedralConnection.atom1.amberName, dihedralConnection.atom2.amberName, dihedralConnection.atom3.amberName));
-			return 0f;
-		}
-
-		float dihedral = dihedralConnection.dihedral;
-
-		float e = 0f;
-		if (order == 0) {
-			e += 0.5f * param.v * (1f + Mathf.Cos (Mathf.Deg2Rad *  (param.periodicity * dihedral - param.gamma)));
-		} else if (order == 1) {
-			e -= 0.5f * param.v * param.periodicity * (Mathf.Sin (Mathf.Deg2Rad *  (param.periodicity * dihedral - param.gamma)));
-		} else if (order == 2) {
-			e -= 0.5f * param.v * param.periodicity * param.periodicity * (Mathf.Cos (Mathf.Deg2Rad *  (param.periodicity * dihedral - param.gamma)));
-		}
-		return e;
-
 	}
 
 }
@@ -1386,32 +1254,6 @@ public class DihedralConnection {
 	
 }
 
-public class PrecomputedNonBonding {
-	public float vdwR;
-	public float vdwV;
-
-	public float q0q1;
-	public float dielectricConstant;
-	public int cType;
-	public Atom atom0;
-	public Atom atom1;
-
-	public PrecomputedNonBonding(VdW vdw0, VdW vdw1, Atom atom0, Atom atom1, float vScale, float cScale, float dielectricConstant) {
-
-		this.atom0 = atom0;
-		this.atom1 = atom1;
-		this.dielectricConstant = dielectricConstant * cScale;
-		this.q0q1 = atom0.partialCharge * atom0.partialCharge;
-		this.vdwR = (vdw0.r + vdw1.r) * 0.5f;
-		this.vdwV = Mathf.Sqrt (vdw0.v * vdw1.v) * vScale;
-	}
-
-	public void GetEnergy(float r, float angstromToBohr, int order, float[] vdwEnergies, float[] coulombEnergies) {
-		Mathematics.EVdWAmber(r, vdwV, vdwR, vdwEnergies);
-		Mathematics.EElectrostaticR1(r * angstromToBohr, q0q1, dielectricConstant, coulombEnergies);
-	}
-
-}
 
 public class NoParameterException : System.Exception {
 	public NoParameterException(System.Type type, params Atom[] atoms) : base (CustomMessage(type, atoms)) {}

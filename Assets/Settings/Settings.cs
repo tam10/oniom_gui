@@ -34,6 +34,12 @@ public class Settings : MonoBehaviour {
 	public float angstromToBohr = 1.8897259886f;
 	public float mdDampingFactor = 0.5f;
 
+	public int amberRepResolution = 2;
+	public float amberRepThickness = 0.1f;
+	public float amberStretchInterval = 0.05f;
+	public int amberStretchSteps = 10;
+	public float amberStretchRepOffset = 0.2f;
+
 	//Protonation
 	private string _tempFolder;
 	public string tempFolder {
