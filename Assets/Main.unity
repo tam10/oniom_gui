@@ -1983,6 +1983,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   activeCamera: {fileID: 1587314638}
+  main: {fileID: 595069188}
   worldMousePosition: {x: 0, y: 0, z: 0}
   screenMousePosition: {x: 0, y: 0, z: 0}
   numHits: 0
@@ -5488,10 +5489,10 @@ MonoBehaviour:
   fogStartDistance: 1
   fogEndDistance: 10
   fogRatio: 0.2
-  mdTimeStep: 0.1
+  mdTimeStep: 0.01
   maxNonBondingCutoff: 15
   angstromToBohr: 1.889726
-  mdDampingFactor: 0.05
+  mdDampingFactor: 0.95
   amberRepResolution: 2
   amberRepThickness: 0.1
   amberStretchInterval: 0.05

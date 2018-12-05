@@ -5,6 +5,7 @@ using UnityEngine;
 public class InputHandler : MonoBehaviour {
 
 	public Camera activeCamera;
+	public Main main;
 	public Vector3 worldMousePosition;
 	public Vector3 screenMousePosition;
 
@@ -44,6 +45,17 @@ public class InputHandler : MonoBehaviour {
 
 	// Update is called once per frame
 	void Update () {
+
+		if (Input.GetKeyDown(KeyCode.Q)) {
+			
+			Fortran.deallocate_all();
+			main.ClearQueue();
+			 #if UNITY_EDITOR
+				UnityEditor.EditorApplication.isPlaying = false;
+			#else
+				Application.Quit();
+			#endif
+		}
 
 		//Handle key presses
 		if (Input.GetKeyDown(KeyCode.Escape)) {

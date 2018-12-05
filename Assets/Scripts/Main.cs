@@ -75,6 +75,7 @@ public class Main : MonoBehaviour {
 		//AddToQueue (LoadAtoms ("/Users/tristanmackenzie/Unity/ONIOM/geo4.com", "com"), "Load Gaussian Input...");
 		//AddToQueue (LoadAtoms ("/Users/tristanmackenzie/Unity/ONIOM/nonbon_test.com", "com"), "Load Gaussian Input...");
 		AddToQueue (LoadAtoms ("/Users/tristanmackenzie/Unity/ONIOM/hooh_test.com", "com"), "Load Gaussian Input...");
+		//AddToQueue (LoadAtoms ("/Users/tristanmackenzie/Unity/ONIOM/o2_test.com", "com"), "Load Gaussian Input...");
 
 		AddToQueue (ActivateAtoms ("com"), "Activate atoms...");
 
@@ -82,8 +83,9 @@ public class Main : MonoBehaviour {
 
 		AddToQueue(AddParametersFromName("com", "amber.prm"), "Adding parameters...");
 
-		AddToQueue(MDVerlet("com", 2500, 1, true), "Running MD...");
-		
+		//AddToQueue(MDVerlet("com", 500, 1, true), "Running MD...");
+
+		AddToQueue(AMBEROpt("com", 250, 1, true), "Optimising...");
 
 
 		StartCoroutine (RunJobs ());
@@ -91,6 +93,10 @@ public class Main : MonoBehaviour {
 
 	void AddToQueue (IEnumerator job, string jobName) {
 		jobQueue.Enqueue (new Job(job, jobName));
+	}
+
+	public void ClearQueue() {
+		jobQueue.Clear();
 	}
 
 	IEnumerator RunJobs() {
@@ -161,11 +167,11 @@ public class Main : MonoBehaviour {
 				double fov = activeCamera.fieldOfView * Mathf.Deg2Rad;
 				double fill_amount = 0.9f;
 				double min_distance = 10f;
-				double[,] positions = new double[size, 3];
+				double[] positions = new double[size *  3];
 				double[] new_camera_position = new double[3];
 				for (int atomNum = 0; atomNum < atoms.size; atomNum++) {
 					for (c=0; c<3; c++){
-						positions[atomNum,c] = atoms[atomNum].p[c];
+						positions[atomNum * 3 + c] = atoms[atomNum].p[c];
 					}
 				}
 				Fortran.getBestCameraView(positions, ref size, new_camera_position, ref fov, ref fill_amount, ref min_distance);
@@ -392,6 +398,22 @@ public class Main : MonoBehaviour {
 				Debug.LogErrorFormat ("Could not initialise MD for ({0})- object is null", atomsName);
 			} else {
 				coroutine = StartCoroutine (atoms.graph.MDVerlet(steps, updateAfterSteps));
+			}
+		} else {
+			Debug.LogErrorFormat ("Atoms ({0}) are not in Atoms Dictionary", atomsName);
+		}
+		yield return coroutine;
+	}
+
+	IEnumerator AMBEROpt(string atomsName, int steps, int updateAfterSteps, bool suppress=false) {
+		Atoms atoms;
+		Coroutine coroutine = null;
+		if (atomsDictionary.TryGetValue (atomsName, out atoms)) {
+
+			if (atoms == null) {
+				Debug.LogErrorFormat ("Could not initialise AMBER Optimisation for ({0})- object is null", atomsName);
+			} else {
+				coroutine = StartCoroutine (atoms.graph.AMBEROpt(steps, updateAfterSteps));
 			}
 		} else {
 			Debug.LogErrorFormat ("Atoms ({0}) are not in Atoms Dictionary", atomsName);

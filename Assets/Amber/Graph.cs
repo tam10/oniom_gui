@@ -11,8 +11,8 @@ public class Graph : MonoBehaviour {
 	private Dictionary<long, DihedralConnection> dihedralsDict;
 
 	//POSITIONS + FORCES
-	private double[,] positions;
-	private double[,] forces;
+	private double[] positions;
+	private double[] forces;
 /* 
 	//STRETCHES
 	private int numStretches;
@@ -72,7 +72,7 @@ public class Graph : MonoBehaviour {
 	public double allTorsionsEnergy;
 	public double allVdwsEnergy;
 	public double allCoulombicEnergy;
-	public double amberGradient;
+	public double rmsForces;
 	public double kineticEnergy;
 	public double totalEnergy;
 
@@ -428,16 +428,14 @@ public class Graph : MonoBehaviour {
 			torsionGammaList.Add(Mathf.Deg2Rad * torsion.gamma3);
 
 			if (torsion.npaths > 0.0){
-				torsionPathList.Add(torsion.npaths);
+				npaths = torsion.npaths;
 			} else {
 				//Determine number of paths from connectivity
 				npaths = (double)
 					(neighbourCount[dihedral.atom1.index] - 1) * 
 					(neighbourCount[dihedral.atom2.index] - 1)
 				;
-				if (npaths > 0.0) {
-					torsionPathList.Add(torsion.npaths);
-				} else {
+				if (npaths <= 0.0) {
 					throw new System.Exception(string.Format(
 						"Error defining torsion: Atom {0} has {1} neighbours. Atom {2} has {3} neighbours",
 						dihedral.atom1.index,
@@ -448,6 +446,9 @@ public class Graph : MonoBehaviour {
 					);
 				}
 			}
+
+			torsionPathList.Add(npaths);
+
 			torsionAtomNumList.Add(dihedral.atom0.index);
 			torsionAtomNumList.Add(dihedral.atom1.index);
 			torsionAtomNumList.Add(dihedral.atom2.index);
@@ -456,9 +457,6 @@ public class Graph : MonoBehaviour {
 
 			numTorsions++;
 		}
-
-		//TEMP
-		numTorsions = 0;
 
 		Fortran.set_torsions (
 			ref numTorsions, 
@@ -555,271 +553,19 @@ public class Graph : MonoBehaviour {
 		);
 	}
 
-
-	//public void GetStretchesEGH() {
-	//	float[] energies = new float[3];
-	//	int a0;
-	//	int a1;
-//
-	//	float[] v01 = new float[3];
-	//	float r01;
-	//	float[] force = new float[3];
-	//	int c = 0;
-//
-	//	allStretchesEnergy = 0f;
-	//	for (int i = 0; i < numStretches; i++) {
-	//		a0 = stretchAtomNums[i * 2];
-	//		a1 = stretchAtomNums[i * 2 + 1];
-	//		
-	//		Mathematics.VectorFromArray(positions, a0, a1, v01);
-	//		r01 = Mathematics.Magnitude3(v01);
-//
-	//		Mathematics.EStretch(
-	//			r01,
-	//			stretchKEqs[i],
-	//			stretchREqs[i],
-	//			energies
-	//		);
-//
-	//		allStretchesEnergy += energies[0];
-	//		_amberGradient += Mathf.Abs(energies[1]);
-//
-	//		Mathematics.Multiply3(v01, energies[1] / r01, force);
-//
-	//		for (c = 0; c < 3; c++){
-	//			forces[a0,c] += force[c];
-	//			forces[a1,c] -= force[c];
-	//		}
-	//		
-	//	}
-	//}
-
-	//public void GetBendsEGH() {
-	//	float[] energies = new float[3];
-	//	int a0;
-	//	int a1;
-	//	int a2;
-//
-	//	allBendsEnergy = 0f;
-	//	int bendAtomNum = 0;
-	//	for (int bendNum = 0; bendNum < numBends; bendNum++) {
-//
-	//		a0 = bendAtomNums[bendAtomNum++];
-	//		a1 = bendAtomNums[bendAtomNum++];
-	//		a2 = bendAtomNums[bendAtomNum++];
-//
-	//		Mathematics.GetBendForce(a0, a1, a2, positions, energies, forces, bendAEqs[bendNum], bendKEqs[bendNum]);
-//
-	//		allBendsEnergy += energies[0];
-	//		_amberGradient += Mathf.Abs(energies[1]);
-//
-	//	}
-	//}
-	//public void GetTorsionEGH() {
-	//	//Reference:
-	//	//http://xray.bmc.uu.se/~aqwww/q_legacy/documents/qman5.pdf
-//
-	//	float t = Time.realtimeSinceStartup;
-//
-	//	int a0;
-	//	int a1;
-	//	int a2;
-	//	int a3;
-	//	int c;
-//
-	//	float[] p3 = new float[3];
-//
-	//	float[] energies = new float[3];
-//
-	//	float[] v10 = new float[3];
-	//	float[] v12 = new float[3];
-	//	float[] v23 = new float[3];
-//
-	//	float[] v10_ = new float[3];
-	//	float[] v12_ = new float[3];
-	//	float[] v23_ = new float[3];
-//
-	//	float[] w1_ = new float[3];
-	//	float[] w2_ = new float[3];
-	//	float[] c12 = new float[3];
-	//	float[] vc3 = new float[3];
-//
-	//	float dihedral;
-	//	float r10;
-	//	float r23;
-	//	float rc3;
-	//	float da_dr10;
-	//	float da_dr23;
-	//	float s1;
-	//	float s2;
-	//	float tempDot = 0f;
-//
-	//	float[] force0 = new float[3];
-	//	float[] force2 = new float[3];
-	//	float[] force3 = new float[3];
-//
-	//	float[] torque3 = new float[3];
-	//	float[] cross = new float[3];
-//
-	//	allTorsionsEnergy = 0f;
-	//	int torsionIndex;
-	//	for (int i = 0; i < numTorsions; i++) {
-	//		torsionIndex = i * 4;
-	//		
-	//		a0 = torsionAtomNums[torsionIndex];
-	//		a1 = torsionAtomNums[torsionIndex + 1];
-	//		a2 = torsionAtomNums[torsionIndex + 2];
-	//		a3 = torsionAtomNums[torsionIndex + 3];
-//
-	//		Mathematics.VectorFromArray(positions, a1, a0, v10);
-	//		Mathematics.VectorFromArray(positions, a1, a2, v12);
-	//		Mathematics.VectorFromArray(positions, a2, a3, v23);
-//
-	//		Mathematics.Normalise3(v12, v12_);
-//
-	//		r10 = Mathematics.Magnitude3(v10);
-	//		r23 = Mathematics.Magnitude3(v23);
-//
-	//		Mathematics.Divide3(v10, r10, v10_);
-	//		Mathematics.Divide3(v23, r23, v23_);
-//
-	//		Mathematics.Cross3(v10_, v12_, w1_);
-	//		Mathematics.Cross3(v23_, v12_, w2_);
-//
-	//		dihedral = Mathematics.SignedAngleRad3(w1_, w2_, v12_);
-//
-	//		s1 = Mathf.Sin(Mathematics.UnsignedAngleRad3(v10_, v12_, tempDot));
-	//		s2 = Mathf.Sin(Mathematics.UnsignedAngleRad3(v12_, v23_, tempDot));
-//
-	//		da_dr10 = 1f / (r10 * s1);
-	//		da_dr23 = 1f / (r23 * s2);
-//
-	//		Mathematics.ETorsion(
-	//			dihedral,
-	//			torsionVs[torsionIndex],
-	//			torsionVs[torsionIndex + 1],
-	//			torsionVs[torsionIndex + 2],
-	//			torsionVs[torsionIndex + 3],
-	//			torsionGammas[torsionIndex],
-	//			torsionGammas[torsionIndex + 1],
-	//			torsionGammas[torsionIndex + 2],
-	//			torsionGammas[torsionIndex + 3],
-	//			energies
-	//		);
-//
-	//		allTorsionsEnergy += energies[0];
-	//		_amberGradient += Mathf.Abs(energies[1]);
-//
-	//		da_dr10 *= energies[1];
-	//		da_dr23 *= energies[1];
-//
-	//		force0[0] = - w1_[0] * da_dr10;
-	//		force0[1] = - w1_[1] * da_dr10;
-	//		force0[2] = - w1_[2] * da_dr10;
-//
-	//		force3[0] = w2_[0] * da_dr23;
-	//		force3[1] = w2_[0] * da_dr23;
-	//		force3[2] = w2_[0] * da_dr23;
-//
-	//		//Position of centre of a1 and a2
-	//		Mathematics.AverageFromArray(positions, a1, a2, c12);
-//
-	//		//Vector and magnitude from centre to a3
-	//		Mathematics.ItemFromArray(positions, a3, p3);
-	//		Mathematics.Subtract3(c12, p3, vc3);
-	//		rc3 = Mathematics.Magnitude3(vc3);
-//
-	//		//Determine torque on a2
-	//		Mathematics.Cross3(vc3, force3, cross);
-	//		Mathematics.Add3(torque3, cross);
-//
-	//		Mathematics.Cross3(v23, force3, cross);
-	//		Mathematics.Multiply3(cross, 0.5f);
-	//		Mathematics.Add3(torque3, cross);
-//
-	//		Mathematics.Cross3(v12, force0, cross);
-	//		Mathematics.Multiply3(cross, -0.5f);
-	//		Mathematics.Add3(torque3, cross);
-//
-	//		//Get force on atom 2
-	//		Mathematics.Divide3(torque3, - rc3 * rc3);
-	//		Mathematics.Cross3(torque3, vc3, force2);
-//
-	//		for (c = 0; c < 3; c++) {
-	//			forces[a0, c] += force0[c];
-	//			forces[a1, c] -= force0[c] + force2[c] + force3[c];
-	//			forces[a2, c] += force2[c];
-	//			forces[a3, c] += force3[c];
-	//		}
-	//	}
-//
-	//}
-
-	//public void GetNonBondingEGHOld() {
-	//	float[] vdwEnergies = new float[3];
-	//	float[] coulombicEnergies = new float[3];
-//
-	//	int a0;
-	//	int a1;
-//
-	//	float[] v10 = new float[3];
-	//	float r10;
-	//	int c;
-//
-	//	float dielectricConstant = parameters.dielectricConstant;
-//
-	//	allCoulombicEnergy = 0f;
-	//	allVdwsEnergy = 0f;
-	//	for (int i = 0; i < numNonBonding; i++) {
-//
-	//		a0 = nonBondingAtomNums[i * 2];
-	//		a1 = nonBondingAtomNums[i * 2 + 1];
-//
-	//		Mathematics.VectorFromArray(positions, a0, a1, v10);
-	//		r10 = Mathematics.Magnitude3(v10);
-	//		
-	//		if (r10 < amberCCutoff){
-	//			Mathematics.EElectrostaticR1(
-	//				r10,
-	//				q0q1s[i],
-	//				dielectricConstant,
-	//				coulombicEnergies
-	//			);
-	//		}
-//
-	//		if (r10 < amberVCutoff) {
-	//			Mathematics.EVdWAmber(
-	//				r10,
-	//				vdwVs[i],
-	//				vdwREqs[i],
-	//				vdwEnergies
-	//			);
-	//		}
-	//		
-	//		allCoulombicEnergy += coulombicEnergies[0];
-	//		allVdwsEnergy += vdwEnergies[0];
-//
-	//		_amberGradient += Mathf.Abs(coulombicEnergies[1]) + Mathf.Abs(vdwEnergies[1]);
-//
-	//		for (c = 0; c < 3; c++){
-	//			forces[a0,c] += v10[c] * (coulombicEnergies[1] + vdwEnergies[1]) / r10;
-	//			forces[a1,c] -= v10[c] * (coulombicEnergies[1] + vdwEnergies[1]) / r10;
-	//		}
-	//	}
-	//}
-
 	public IEnumerator GetAmberEGH(bool suppressStretches=false, bool suppressBends=false, bool suppressTorsions=true, bool suppressNonBonding=false) {
 		_busy++;
 
-		amberGradient = 0f;
+		rmsForces = 0f;
 		int c;
 		for (int atomNum = 0; atomNum < atoms.size; atomNum++) {
 			for (c=0; c<3; c++){
-				positions[atomNum,c] = atoms[atomNum].p[c];
+				positions[atomNum * 3 + c] = atoms[atomNum].p[c];
 			}
 		}
 		int numAtoms = size;
-		Fortran.set_geometry(positions, ref numAtoms);
+		forces = new double[numAtoms * 3];
+		Fortran.allocate_atom_arrays(ref numAtoms);
 
 		int status = 0;
 
@@ -829,8 +575,10 @@ public class Graph : MonoBehaviour {
 		double[] vdwsEnergy = new double[2];
 		double[] coulombicEnergy = new double[2];
 		
-		Fortran.e_amber(forces, stretchesEnergy, bendsEnergy, torsionsEnergy, vdwsEnergy,
-        coulombicEnergy, ref amberGradient, ref status);
+		Fortran.e_amber(positions, forces, 
+			stretchesEnergy, bendsEnergy, torsionsEnergy, vdwsEnergy,
+			coulombicEnergy, ref rmsForces, ref status
+		);
 		Fortran.CheckStatus(status);
 		
 		//GetStretchesEGH();
@@ -852,7 +600,7 @@ public class Graph : MonoBehaviour {
 		totalEnergy = amberEnergy + kineticEnergy;
 		for (int atomNum = 0; atomNum < atoms.size; atomNum++) {
 			for (c=0; c<3; c++){
-				atoms[atomNum].force[c] = (float)forces[atomNum, c];
+				atoms[atomNum].force[c] = (float)forces[3 * atomNum + c];
 			}
 		}
 		_busy--;
@@ -899,22 +647,22 @@ public class Graph : MonoBehaviour {
 		int status = 0;
 		int c = 0;
 		int numAtoms = size;
-		positions = new double[numAtoms, 3];
-		forces = new double[numAtoms, 3];
+		positions = new double[numAtoms * 3];
 
-		for (int atomNum = 0; atomNum < atoms.size; atomNum++) {
+		for (int atomNum = 0; atomNum < numAtoms; atomNum++) {
 			for (c=0; c<3; c++){
-				positions[atomNum,c] = atoms[atomNum].p[c];
+				positions[3 * atomNum + c] = atoms[atomNum].p[c];
 			}
 		}
-		Fortran.set_geometry(positions, ref numAtoms);
+
+		
+
+		Fortran.allocate_atom_arrays(ref numAtoms);
 
 		IEnumerator iEnumerator;
 		iEnumerator = InitialiseParameters();
 			while (iEnumerator.MoveNext()) {}
 		yield return null;
-
-
 
 		double[] stretchesEnergy = new double[2];
 		double[] bendsEnergy = new double[2];
@@ -925,15 +673,20 @@ public class Graph : MonoBehaviour {
 		double mdTimeStep = atoms.globalSettings.mdTimeStep;
 		double mdDampingFactor = atoms.globalSettings.mdDampingFactor;
 
+		string logPath = "/Users/tristanmackenzie/Unity/ONIOM/Assets/Plugins/out.log";
+		System.IO.File.Delete(logPath);
+
 		//Run MD
 		int stepNum = 0;
+		Vector3 vPosition = new Vector3();
 		while (stepNum < steps) {
 
-			Fortran.set_geometry(positions, ref numAtoms);
+			writeArray(positions, logPath);
 			Fortran.md_verlet(positions, ref updateAfterSteps, 
 				ref mdTimeStep, ref mdDampingFactor,
 				stretchesEnergy, bendsEnergy, torsionsEnergy, vdwsEnergy, coulombicEnergy,
-				ref kineticEnergy, ref amberGradient, ref status);
+				ref kineticEnergy, ref rmsForces, ref status);
+			writeArray(positions, logPath);
 			Fortran.CheckStatus(status);
 
 			allStretchesEnergy = stretchesEnergy[0];
@@ -946,19 +699,107 @@ public class Graph : MonoBehaviour {
 			totalEnergy = amberEnergy + kineticEnergy;
 			
 			stepNum += updateAfterSteps;
-
-			for (int atomNum = 0; atomNum < atoms.size; atomNum++) {
-				atoms[atomNum].transform.localPosition.Set(
-					(float)positions[atomNum, 0],
-					(float)positions[atomNum, 1],
-					(float)positions[atomNum, 2]
-				);
+			for (int atomNum = 0; atomNum < numAtoms; atomNum++) {
+				for (c = 0; c < 3; c++) {
+					vPosition[c] = (float)positions[3 * atomNum + c];
+				}
+				atoms[atomNum].transform.localPosition = vPosition;
 			}
+			
 			yield return null;
 		}
 
 		_busy--;
 		yield return null;
+	}
+
+	public IEnumerator AMBEROpt(int steps, int updateAfterSteps=5) {
+		_busy++;
+
+		int status = 0;
+		int c = 0;
+		int numAtoms = size;
+		positions = new double[numAtoms * 3];
+
+		for (int atomNum = 0; atomNum < numAtoms; atomNum++) {
+			for (c=0; c<3; c++){
+				positions[3 * atomNum + c] = atoms[atomNum].p[c];
+			}
+		}
+
+		Fortran.allocate_atom_arrays(ref numAtoms);
+
+		IEnumerator iEnumerator;
+		iEnumerator = InitialiseParameters();
+			while (iEnumerator.MoveNext()) {}
+		yield return null;
+
+		double[] stretchesEnergy = new double[2];
+		double[] bendsEnergy = new double[2];
+		double[] torsionsEnergy = new double[2];
+		double[] vdwsEnergy = new double[2];
+		double[] coulombicEnergy = new double[2];
+
+		string logPath = "/Users/tristanmackenzie/Unity/ONIOM/Assets/Plugins/out.log";
+		System.IO.File.Delete(logPath);
+
+		double convergence_threshold = 0.00001;
+		int precision = 3;
+		int iprint = 0;
+		int matrix_corrections = 17;
+
+		int stepNum = 0;
+		Vector3 vPosition = new Vector3();
+		while (stepNum < steps) {
+
+			writeArray(positions, logPath);
+			Fortran.lbfgs_optimise(positions, ref updateAfterSteps,
+                stretchesEnergy, bendsEnergy, torsionsEnergy,
+                vdwsEnergy, coulombicEnergy, ref convergence_threshold,
+                ref precision, ref iprint, ref matrix_corrections, ref status
+            );
+			writeArray(positions, logPath);
+			Fortran.CheckStatus(status);
+
+			allStretchesEnergy = stretchesEnergy[0];
+			allBendsEnergy = bendsEnergy[0];
+			allTorsionsEnergy = torsionsEnergy[0];
+			allVdwsEnergy = vdwsEnergy[0];
+			allCoulombicEnergy = coulombicEnergy[0];
+
+			amberEnergy = allStretchesEnergy + allBendsEnergy + allTorsionsEnergy + allVdwsEnergy + allCoulombicEnergy;
+			totalEnergy = amberEnergy + kineticEnergy;
+			
+			stepNum += updateAfterSteps;
+			for (int atomNum = 0; atomNum < numAtoms; atomNum++) {
+				for (c = 0; c < 3; c++) {
+					vPosition[c] = (float)positions[3 * atomNum + c];
+				}
+				atoms[atomNum].transform.localPosition = vPosition;
+			}
+			
+			yield return null;
+		}
+
+		_busy--;
+		yield return null;
+	}
+
+	void writeArray(double[] A, string fn) {
+		System.Text.StringBuilder sb = new System.Text.StringBuilder();
+
+		for (int ln=0;ln<A.GetLength(0) / 3;ln++) {
+			sb.Append(string.Format(
+				"{0:00000} {1,12:0.000000} {2,12:0.000000} {3,12:0.000000}\n",
+				ln,
+				A[ln],
+				A[ln + 1],
+				A[ln + 2]
+			));
+		}
+		sb.Append("\n");
+
+		System.IO.File.AppendAllText(fn, sb.ToString());
 	}
 
 	public IEnumerator SolveGraph() {

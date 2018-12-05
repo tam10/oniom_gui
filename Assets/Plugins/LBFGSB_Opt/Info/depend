@@ -1,0 +1,7 @@
+blas1/dnrm2.f
+blas1/daxpy.f
+blas1/dcopy.f
+blas1/ddot.f
+linpack/dpofa.f
+blas1/dscal.f
+linpack/dtrsl.f
